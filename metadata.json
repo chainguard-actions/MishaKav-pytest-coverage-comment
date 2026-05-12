@@ -1,0 +1,7 @@
+{
+  "owner": "MishaKav",
+  "name": "pytest-coverage-comment",
+  "visibility": "internal",
+  "description": "GitHub Action that adds pytest coverage reports as comments to pull requests with badges, test statistics, and direct file links. Requires pull-requests: write permission.",
+  "block_publish": false
+}
