@@ -8,6 +8,7 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 
 | Version | Tag | Upstream commit |
 |---------|-----|-----------------|
+| v1.5.0 | [`v1.5.0`](https://github.com/chainguard-actions/pytest-coverage-comment/tree/v1.5.0) | — |
 | v1.7.0 | [`v1.7.0`](https://github.com/chainguard-actions/pytest-coverage-comment/tree/v1.7.0) | — |
 
 ## Privacy
