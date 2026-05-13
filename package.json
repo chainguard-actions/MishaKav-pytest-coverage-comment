@@ -1,0 +1,54 @@
+{
+  "name": "pytest-coverage-comment",
+  "version": "1.7.2",
+  "description": "Comments a pull request with the pytest code coverage badge, full report and tests summary",
+  "author": "Misha Kav",
+  "license": "MIT",
+  "keywords": [
+    "actions",
+    "pull-request",
+    "push",
+    "comment",
+    "message",
+    "python",
+    "pytest",
+    "coverage"
+  ],
+  "bugs": {
+    "url": "https://github.com/MishaKav/pytest-coverage-comment/issues"
+  },
+  "homepage": "https://github.com/MishaKav/pytest-coverage-comment/#readme",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "ncc build src/index.ts --license licenses.txt",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write 'src/**/*.ts'",
+    "format-check": "prettier --check 'src/**/*.ts'",
+    "lint": "eslint 'src/**/*.ts'",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "bump-version": "npm version patch",
+    "all": "npm run typecheck && npm run lint && npm run format && npm run test && npm run build"
+  },
+  "dependencies": {
+    "@actions/core": "^2.0.3",
+    "@actions/github": "^8.0.1",
+    "xml2js": "^0.6.2"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "@types/xml2js": "^0.4.14",
+    "@vercel/ncc": "^0.38.4",
+    "@vitest/coverage-v8": "^4.1.4",
+    "eslint": "^10.2.1",
+    "prettier": "^3.8.3",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.58.2",
+    "vitest": "^4.1.4"
+  },
+  "prettier": {
+    "semi": true,
+    "singleQuote": true
+  }
+}
