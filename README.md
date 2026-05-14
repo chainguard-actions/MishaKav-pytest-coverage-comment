@@ -11,6 +11,7 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 | v1.5.0 | [`v1.5.0`](https://github.com/chainguard-actions/pytest-coverage-comment/tree/v1.5.0) | — |
 | v1.6.0 | [`v1.6.0`](https://github.com/chainguard-actions/pytest-coverage-comment/tree/v1.6.0) | — |
 | v1.7.0 | [`v1.7.0`](https://github.com/chainguard-actions/pytest-coverage-comment/tree/v1.7.0) | — |
+| v1.7.1 | [`v1.7.1`](https://github.com/chainguard-actions/pytest-coverage-comment/tree/v1.7.1) | — |
 | v1.7.2 | [`v1.7.2`](https://github.com/chainguard-actions/pytest-coverage-comment/tree/v1.7.2) | — |
 
 ## Privacy
