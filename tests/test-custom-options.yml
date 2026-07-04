@@ -1,0 +1,72 @@
+name: Test custom options (hide-badge, hide-report, custom title)
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create pytest coverage text file
+        run: |
+          cat > /tmp/pytest-coverage.txt << 'EOF'
+          ---------- coverage: platform linux, python 3.9.7-final-0 ----------
+          Name                 Stmts   Miss  Cover   Missing
+          ----------------------------------------------------
+          src/app.py              40      4    90%   30-33
+          src/helpers.py          20      0   100%
+          ----------------------------------------------------
+          TOTAL                   60      4    93%
+
+          8 passed in 0.55s
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          pytest-coverage-path: /tmp/pytest-coverage.txt
+          title: 'My Custom Coverage Report'
+          badge-title: 'Test Coverage'
+          hide-badge: 'true'
+          hide-report: 'false'
+          hide-comment: 'true'
+          hide-emoji: 'true'
+          default-branch: 'main'
+
+      - name: Assert coverage output is set
+        env:
+          COVERAGE: ${{ steps.action.outputs.coverage }}
+        run: |
+          echo "coverage: $COVERAGE"
+          if [ -z "$COVERAGE" ]; then
+            echo "FAIL: expected coverage output to be non-empty"
+            exit 1
+          fi
+          echo "PASS: coverage=$COVERAGE"
+
+      - name: Assert color output is set
+        env:
+          COLOR: ${{ steps.action.outputs.color }}
+        run: |
+          echo "color: $COLOR"
+          if [ -z "$COLOR" ]; then
+            echo "FAIL: expected color output to be non-empty"
+            exit 1
+          fi
+          # High coverage (93%) should be green or brightgreen
+          if [ "$COLOR" != "green" ] && [ "$COLOR" != "brightgreen" ]; then
+            echo "WARN: color is '$COLOR', expected green or brightgreen for 93% coverage"
+          fi
+          echo "PASS: color=$COLOR"
+
+      - name: Assert coverageHtml output is set
+        env:
+          HTML: ${{ steps.action.outputs.coverageHtml }}
+        run: |
+          echo "coverageHtml length: ${#HTML}"
+          if [ -z "$HTML" ]; then
+            echo "FAIL: expected coverageHtml output to be non-empty"
+            exit 1
+          fi
+          echo "PASS"
