@@ -13,6 +13,7 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 | v1.7.0 | [`v1.7.0`](https://github.com/chainguard-actions/MishaKav-pytest-coverage-comment/tree/v1.7.0) | — |
 | v1.7.1 | [`v1.7.1`](https://github.com/chainguard-actions/MishaKav-pytest-coverage-comment/tree/v1.7.1) | — |
 | v1.7.2 | [`v1.7.2`](https://github.com/chainguard-actions/MishaKav-pytest-coverage-comment/tree/v1.7.2) | — |
+| v1.9.0 | [`v1.9.0`](https://github.com/chainguard-actions/MishaKav-pytest-coverage-comment/tree/v1.9.0) | [`4a4889e`](https://github.com/MishaKav/pytest-coverage-comment/commit/4a4889e6085d4e19fd19bf4a763c83d5332c8d06) |
 
 ## Privacy
 
