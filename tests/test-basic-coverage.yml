@@ -1,0 +1,57 @@
+name: Test basic coverage from txt file
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_EVENT_NAME: pull_request
+      GITHUB_REF: refs/pull/1/merge
+      GITHUB_HEAD_REF: feature-branch
+      GITHUB_BASE_REF: main
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create pytest coverage txt file
+        run: |
+          cat > /tmp/pytest-coverage.txt << 'EOF'
+          ----------- coverage: platform linux, python 3.9.7-final-0 -----------
+          Name                 Stmts   Miss  Cover   Missing
+          ----------------------------------------------------
+          src/__init__.py          0      0   100%
+          src/calculator.py       20      3    85%   10-12
+          src/utils.py            15      0   100%
+          ----------------------------------------------------
+          TOTAL                   35      3    91%
+
+          ==================== 5 passed in 0.12s ====================
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          pytest-coverage-path: /tmp/pytest-coverage.txt
+          hide-comment: 'true'
+
+      - name: Assert coverage output is set
+        env:
+          ACTUAL: ${{ steps.action.outputs.coverage }}
+        run: |
+          echo "actual coverage: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: expected coverage output to be non-empty"
+            exit 1
+          fi
+          echo "PASS: coverage=$ACTUAL"
+
+      - name: Assert color output is set
+        env:
+          ACTUAL: ${{ steps.action.outputs.color }}
+        run: |
+          echo "actual color: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: expected color output to be non-empty"
+            exit 1
+          fi
+          echo "PASS: color=$ACTUAL"

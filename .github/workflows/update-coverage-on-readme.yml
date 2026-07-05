@@ -1,0 +1,58 @@
+name: Update Coverage on Readme
+on:
+  push:
+    branches:
+      - test-branch
+
+permissions:
+  contents: write
+  checks: write
+  pull-requests: write
+
+jobs:
+  update-coverage-on-readme:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
+          fetch-depth: 0 # otherwise, you will failed to push refs to dest repo
+
+      - name: Pytest coverage comment
+        if: ${{ github.ref == 'refs/heads/main' }}
+        id: coverageComment
+        uses: MishaKav/pytest-coverage-comment@fd9adbdca9fdfbe2b9bfa44a7340e6a83346ce6c # main
+        with:
+          hide-comment: true
+          pytest-coverage-path: ./data/pytest-coverage_4.txt
+
+      - name: Update Readme with Coverage Html
+        if: ${{ github.ref == 'refs/heads/main' }}
+        env:
+          COVERAGE_CONTENT: ${{ steps.coverageComment.outputs.content }}
+        run: |
+          python3 - <<'PYEOF'
+import os
+begin = '<!-- Pytest Coverage Comment:Begin -->'
+end = '<!-- Pytest Coverage Comment:End -->'
+content = os.environ['COVERAGE_CONTENT']
+with open('./README.md', 'r') as f:
+    text = f.read()
+new_block = begin + '\n' + content + '\n' + end
+import re
+new_text = re.sub(
+    re.escape(begin) + r'.*?' + re.escape(end),
+    new_block,
+    text,
+    flags=re.DOTALL
+)
+with open('./README.md', 'w') as f:
+    f.write(new_text)
+PYEOF
+
+      - name: Commit & Push changes to Readme
+        if: ${{ github.ref == 'refs/heads/main' }}
+        uses: actions-js/push@5a7cbd780d82c0c937b5977586e641b2fd94acc5 # master
+        with:
+          message: Update coverage on Readme
+          github_token: ${{ secrets.GITHUB_TOKEN }}

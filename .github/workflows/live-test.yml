@@ -1,0 +1,60 @@
+name: My Pytest Coverage Comment
+on:
+  pull_request:
+
+permissions:
+  contents: write
+  checks: write
+  pull-requests: write
+
+jobs:
+  live-test:
+    name: Live Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Pytest coverage comment
+        id: coverageComment
+        uses: MishaKav/pytest-coverage-comment@fd9adbdca9fdfbe2b9bfa44a7340e6a83346ce6c # main
+        with:
+          pytest-coverage-path: ./data/pytest-coverage_4.txt
+          junitxml-path: ./data/pytest_1.xml
+
+      - name: Check the output coverage
+        env:
+          COVERAGE: ${{ steps.coverageComment.outputs.coverage }}
+          COLOR: ${{ steps.coverageComment.outputs.color }}
+          COVERAGE_HTML: ${{ steps.coverageComment.outputs.coverageHtml }}
+          WARNINGS: ${{ steps.coverageComment.outputs.warnings }}
+          ERRORS: ${{ steps.coverageComment.outputs.errors }}
+          FAILURES: ${{ steps.coverageComment.outputs.failures }}
+          SKIPPED: ${{ steps.coverageComment.outputs.skipped }}
+          TESTS: ${{ steps.coverageComment.outputs.tests }}
+          TIME: ${{ steps.coverageComment.outputs.time }}
+          NOT_SUCCESS_TEST_INFO: ${{ steps.coverageComment.outputs.notSuccessTestInfo }}
+        run: |
+          echo "Coverage Percentage - $COVERAGE"
+          echo "Coverage Color - $COLOR"
+          echo "Coverage Html - $COVERAGE_HTML"
+
+          echo "Coverage Warnings - $WARNINGS"
+
+          echo "Coverage Errors - $ERRORS"
+          echo "Coverage Failures - $FAILURES"
+          echo "Coverage Skipped - $SKIPPED"
+          echo "Coverage Tests - $TESTS"
+          echo "Coverage Time - $TIME"
+
+          echo "Not Success Test Info - $NOT_SUCCESS_TEST_INFO"
+
+      - name: Create the Badge
+        uses: schneegans/dynamic-badges-action@0e50b8bad39e7e1afd3e4e9c2b7dd145fad07501 # v1.8.0
+        with:
+          auth: ${{ secrets.PYTEST_COVERAGE_COMMENT }}
+          gistID: 5e90d640f8c212ab7bbac38f72323f80
+          filename: pytest-coverage-comment__main.json
+          label: Coverage Report
+          message: ${{ steps.coverageComment.outputs.coverage }}
+          color: ${{ steps.coverageComment.outputs.color }}
+          namedLogo: python

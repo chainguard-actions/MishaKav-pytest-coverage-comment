@@ -1,0 +1,105 @@
+name: Test JUnit XML statistics outputs
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_EVENT_NAME: push
+      GITHUB_REF: refs/heads/main
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create pytest coverage txt file
+        run: |
+          cat > /tmp/pytest-coverage.txt << 'EOF'
+          ----------- coverage: platform linux, python 3.9.7-final-0 -----------
+          Name                 Stmts   Miss  Cover   Missing
+          ----------------------------------------------------
+          src/app.py              50      5    90%   10-14
+          ----------------------------------------------------
+          TOTAL                   50      5    90%
+
+          ==================== 8 passed, 1 skipped, 1 failed in 1.23s ====================
+          EOF
+
+      - name: Create JUnit XML file
+        run: |
+          cat > /tmp/junit.xml << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <testsuites>
+            <testsuite name="pytest" errors="0" failures="1" skipped="1" tests="10" time="1.234">
+              <testcase classname="tests.test_app" name="test_success" time="0.100"/>
+              <testcase classname="tests.test_app" name="test_skipped" time="0.001">
+                <skipped message="skipped"/>
+              </testcase>
+              <testcase classname="tests.test_app" name="test_failure" time="0.200">
+                <failure message="AssertionError">assert False</failure>
+              </testcase>
+            </testsuite>
+          </testsuites>
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          pytest-coverage-path: /tmp/pytest-coverage.txt
+          junitxml-path: /tmp/junit.xml
+          junitxml-title: 'Test Results'
+          hide-comment: 'true'
+
+      - name: Assert tests output is set
+        env:
+          ACTUAL: ${{ steps.action.outputs.tests }}
+        run: |
+          echo "actual tests: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: expected tests output to be non-empty"
+            exit 1
+          fi
+          echo "PASS: tests=$ACTUAL"
+
+      - name: Assert failures output is set
+        env:
+          ACTUAL: ${{ steps.action.outputs.failures }}
+        run: |
+          echo "actual failures: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: expected failures output to be non-empty"
+            exit 1
+          fi
+          echo "PASS: failures=$ACTUAL"
+
+      - name: Assert skipped output is set
+        env:
+          ACTUAL: ${{ steps.action.outputs.skipped }}
+        run: |
+          echo "actual skipped: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: expected skipped output to be non-empty"
+            exit 1
+          fi
+          echo "PASS: skipped=$ACTUAL"
+
+      - name: Assert time output is set
+        env:
+          ACTUAL: ${{ steps.action.outputs.time }}
+        run: |
+          echo "actual time: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: expected time output to be non-empty"
+            exit 1
+          fi
+          echo "PASS: time=$ACTUAL"
+
+      - name: Assert summaryReport output is set
+        env:
+          ACTUAL: ${{ steps.action.outputs.summaryReport }}
+        run: |
+          echo "actual summaryReport length: ${#ACTUAL}"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: expected summaryReport output to be non-empty"
+            exit 1
+          fi
+          echo "PASS"
