@@ -1,42 +1,14 @@
-name: Test multiple coverage files (monorepo)
+name: Test multiple-files input for monorepo
 on:
   workflow_dispatch:
+
 jobs:
   test:
     runs-on: ubuntu-latest
-    env:
-      GITHUB_EVENT_NAME: push
-      GITHUB_REF: refs/heads/main
+    permissions:
+      pull-requests: write
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-
-      - name: Create backend coverage txt file
-        run: |
-          cat > /tmp/backend-coverage.txt << 'EOF'
-          ----------- coverage: platform linux, python 3.9.7-final-0 -----------
-          Name                    Stmts   Miss  Cover   Missing
-          -------------------------------------------------------
-          backend/api.py             40      4    90%   15-18
-          backend/models.py          20      0   100%
-          -------------------------------------------------------
-          TOTAL                      60      4    93%
-
-          ==================== 6 passed in 0.30s ====================
-          EOF
-
-      - name: Create frontend coverage txt file
-        run: |
-          cat > /tmp/frontend-coverage.txt << 'EOF'
-          ----------- coverage: platform linux, python 3.9.7-final-0 -----------
-          Name                      Stmts   Miss  Cover   Missing
-          ---------------------------------------------------------
-          frontend/views.py            30      6    80%   10-15
-          frontend/helpers.py          10      0   100%
-          ---------------------------------------------------------
-          TOTAL                        40      6    85%
-
-          ==================== 4 passed in 0.20s ====================
-          EOF
 
       - id: action
         uses: .
@@ -44,10 +16,16 @@ jobs:
           github-token: ${{ github.token }}
           hide-comment: 'true'
           multiple-files: |
-            Backend API, /tmp/backend-coverage.txt
-            Frontend Tests, /tmp/frontend-coverage.txt
+            Backend, tests/fixtures/pytest-coverage.txt
+            Frontend, tests/fixtures/coverage.xml
 
-      - name: Assert action completed without error
+      - name: Assert coverageHtml output is set for multiple files
+        env:
+          HTML: ${{ steps.action.outputs.coverageHtml }}
         run: |
-          echo "Action completed successfully with multiple-files input"
-          echo "PASS"
+          echo "coverageHtml length: ${#HTML}"
+          if [ -z "$HTML" ]; then
+            echo "FAIL: expected coverageHtml output to be non-empty for multiple-files input"
+            exit 1
+          fi
+          echo "PASS: coverageHtml is set"

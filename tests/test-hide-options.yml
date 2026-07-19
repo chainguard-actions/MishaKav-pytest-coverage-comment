@@ -1,4 +1,4 @@
-name: Test XML coverage report
+name: Test hide-badge and hide-report options
 on:
   workflow_dispatch:
 
@@ -14,39 +14,30 @@ jobs:
         uses: .
         with:
           github-token: ${{ github.token }}
-          pytest-xml-coverage-path: tests/fixtures/coverage.xml
+          pytest-coverage-path: tests/fixtures/pytest-coverage.txt
           hide-comment: 'true'
-          title: 'XML Coverage Report'
+          hide-badge: 'true'
+          hide-report: 'true'
+          hide-emoji: 'true'
 
-      - name: Assert coverage output is set
+      - name: Assert coverage output is still set when badge and report are hidden
         env:
           COVERAGE: ${{ steps.action.outputs.coverage }}
         run: |
           echo "coverage: $COVERAGE"
           if [ -z "$COVERAGE" ]; then
-            echo "FAIL: expected coverage output to be non-empty"
+            echo "FAIL: expected coverage output to be non-empty even when badge/report hidden"
             exit 1
           fi
           echo "PASS: coverage=$COVERAGE"
 
-      - name: Assert color output is set
+      - name: Assert color output is still set when badge and report are hidden
         env:
           COLOR: ${{ steps.action.outputs.color }}
         run: |
           echo "color: $COLOR"
           if [ -z "$COLOR" ]; then
-            echo "FAIL: expected color output to be non-empty"
+            echo "FAIL: expected color output to be non-empty even when badge/report hidden"
             exit 1
           fi
           echo "PASS: color=$COLOR"
-
-      - name: Assert coverageHtml output is set
-        env:
-          HTML: ${{ steps.action.outputs.coverageHtml }}
-        run: |
-          echo "coverageHtml length: ${#HTML}"
-          if [ -z "$HTML" ]; then
-            echo "FAIL: expected coverageHtml output to be non-empty"
-            exit 1
-          fi
-          echo "PASS: coverageHtml is set"

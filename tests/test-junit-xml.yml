@@ -1,0 +1,75 @@
+name: Test JUnit XML test statistics
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          pytest-coverage-path: tests/fixtures/pytest-coverage.txt
+          junitxml-path: tests/fixtures/junit.xml
+          junitxml-title: 'Test Results'
+          hide-comment: 'true'
+
+      - name: Assert tests output is set
+        env:
+          TESTS: ${{ steps.action.outputs.tests }}
+        run: |
+          echo "tests: $TESTS"
+          if [ -z "$TESTS" ]; then
+            echo "FAIL: expected tests output to be non-empty"
+            exit 1
+          fi
+          echo "PASS: tests=$TESTS"
+
+      - name: Assert failures output is set
+        env:
+          FAILURES: ${{ steps.action.outputs.failures }}
+        run: |
+          echo "failures: $FAILURES"
+          if [ -z "$FAILURES" ]; then
+            echo "FAIL: expected failures output to be non-empty"
+            exit 1
+          fi
+          echo "PASS: failures=$FAILURES"
+
+      - name: Assert skipped output is set
+        env:
+          SKIPPED: ${{ steps.action.outputs.skipped }}
+        run: |
+          echo "skipped: $SKIPPED"
+          if [ -z "$SKIPPED" ]; then
+            echo "FAIL: expected skipped output to be non-empty"
+            exit 1
+          fi
+          echo "PASS: skipped=$SKIPPED"
+
+      - name: Assert time output is set
+        env:
+          TIME: ${{ steps.action.outputs.time }}
+        run: |
+          echo "time: $TIME"
+          if [ -z "$TIME" ]; then
+            echo "FAIL: expected time output to be non-empty"
+            exit 1
+          fi
+          echo "PASS: time=$TIME"
+
+      - name: Assert summaryReport output is set
+        env:
+          SUMMARY: ${{ steps.action.outputs.summaryReport }}
+        run: |
+          echo "summaryReport: $SUMMARY"
+          if [ -z "$SUMMARY" ]; then
+            echo "FAIL: expected summaryReport output to be non-empty"
+            exit 1
+          fi
+          echo "PASS: summaryReport is set"

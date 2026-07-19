@@ -1,4 +1,4 @@
-name: Test XML coverage report
+name: Test basic txt coverage report
 on:
   workflow_dispatch:
 
@@ -14,9 +14,10 @@ jobs:
         uses: .
         with:
           github-token: ${{ github.token }}
-          pytest-xml-coverage-path: tests/fixtures/coverage.xml
+          pytest-coverage-path: tests/fixtures/pytest-coverage.txt
           hide-comment: 'true'
-          title: 'XML Coverage Report'
+          title: 'Test Coverage Report'
+          badge-title: 'Coverage'
 
       - name: Assert coverage output is set
         env:

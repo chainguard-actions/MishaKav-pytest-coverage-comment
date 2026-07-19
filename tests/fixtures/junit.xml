@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+  <testsuite name="pytest" errors="0" failures="1" skipped="1" tests="4" time="0.123" timestamp="2022-08-09T00:00:00.000000" hostname="runner">
+    <testcase classname="tests.test_calculator" name="test_add" time="0.010"/>
+    <testcase classname="tests.test_calculator" name="test_subtract" time="0.010"/>
+    <testcase classname="tests.test_calculator" name="test_multiply" time="0.010">
+      <failure message="AssertionError: assert 6 == 7">AssertionError: assert 6 == 7</failure>
+    </testcase>
+    <testcase classname="tests.test_utils" name="test_format" time="0.010">
+      <skipped message="skip reason">skip reason</skipped>
+    </testcase>
+  </testsuite>
+</testsuites>
