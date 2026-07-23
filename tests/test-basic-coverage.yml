@@ -1,33 +1,21 @@
-name: Test basic coverage report parsing
+name: Test basic pytest coverage text file
 on:
   workflow_dispatch:
+
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Create pytest coverage text file
-        run: |
-          cat > /tmp/pytest-coverage.txt << 'EOF'
-          ---------- coverage: platform linux, python 3.9.7-final-0 ----------
-          Name                 Stmts   Miss  Cover   Missing
-          ----------------------------------------------------
-          src/__init__.py          0      0   100%
-          src/main.py             50     10    80%   20-25, 40-44
-          src/utils.py            30      5    83%   15-19
-          ----------------------------------------------------
-          TOTAL                   80     15    81%
-
-          5 passed in 0.42s
-          EOF
-
       - id: action
         uses: .
         with:
           github-token: ${{ github.token }}
-          pytest-coverage-path: /tmp/pytest-coverage.txt
+          pytest-coverage-path: tests/fixtures/pytest-coverage.txt
           hide-comment: 'true'
+          title: 'Test Coverage Report'
+          badge-title: 'Coverage'
 
       - name: Assert coverage output is set
         env:
@@ -35,10 +23,10 @@ jobs:
         run: |
           echo "coverage: $COVERAGE"
           if [ -z "$COVERAGE" ]; then
-            echo "FAIL: expected coverage output to be non-empty"
+            echo "FAIL: coverage output is empty"
             exit 1
           fi
-          echo "PASS: coverage=$COVERAGE"
+          echo "PASS: coverage output is '$COVERAGE'"
 
       - name: Assert color output is set
         env:
@@ -46,10 +34,10 @@ jobs:
         run: |
           echo "color: $COLOR"
           if [ -z "$COLOR" ]; then
-            echo "FAIL: expected color output to be non-empty"
+            echo "FAIL: color output is empty"
             exit 1
           fi
-          echo "PASS: color=$COLOR"
+          echo "PASS: color output is '$COLOR'"
 
       - name: Assert coverageHtml output is set
         env:
@@ -57,7 +45,18 @@ jobs:
         run: |
           echo "coverageHtml length: ${#HTML}"
           if [ -z "$HTML" ]; then
-            echo "FAIL: expected coverageHtml output to be non-empty"
+            echo "FAIL: coverageHtml output is empty"
+            exit 1
+          fi
+          echo "PASS: coverageHtml is non-empty"
+
+      - name: Assert coverage percentage is 85%
+        env:
+          COVERAGE: ${{ steps.action.outputs.coverage }}
+        run: |
+          echo "coverage: $COVERAGE"
+          if [ "$COVERAGE" != "85%" ]; then
+            echo "FAIL: expected '85%' but got '$COVERAGE'"
             exit 1
           fi
           echo "PASS"

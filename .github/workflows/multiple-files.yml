@@ -11,17 +11,17 @@ jobs:
   test-multiple-files:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Pytest coverage comment
-        uses: MishaKav/pytest-coverage-comment@4a4889e6085d4e19fd19bf4a763c83d5332c8d06 # main
+        uses: MishaKav/pytest-coverage-comment@fd9adbdca9fdfbe2b9bfa44a7340e6a83346ce6c # main
         with:
           multiple-files: |
             My Title 1, ./data/pytest-coverage_3.txt, ./data/pytest_1.xml
             My Title 2, ./data/pytest-coverage_4.txt, ./data/pytest_2.xml
 
       - name: Pytest coverage comment multiple-files no test report
-        uses: MishaKav/pytest-coverage-comment@4a4889e6085d4e19fd19bf4a763c83d5332c8d06 # main
+        uses: MishaKav/pytest-coverage-comment@fd9adbdca9fdfbe2b9bfa44a7340e6a83346ce6c # main
         with:
           create-new-comment: true
           multiple-files: |
@@ -29,7 +29,7 @@ jobs:
             My Title 2 w/o report, ./data/pytest-coverage_4.txt
 
       - name: Pytest coverage comment multiple-files mixed 1
-        uses: MishaKav/pytest-coverage-comment@4a4889e6085d4e19fd19bf4a763c83d5332c8d06 # main
+        uses: MishaKav/pytest-coverage-comment@fd9adbdca9fdfbe2b9bfa44a7340e6a83346ce6c # main
         with:
           create-new-comment: true
           multiple-files: |
@@ -37,7 +37,7 @@ jobs:
             My Title 2 w/o report, ./data/pytest-coverage_4.txt
 
       - name: Pytest coverage comment multiple-files mixed 2
-        uses: MishaKav/pytest-coverage-comment@4a4889e6085d4e19fd19bf4a763c83d5332c8d06 # main
+        uses: MishaKav/pytest-coverage-comment@fd9adbdca9fdfbe2b9bfa44a7340e6a83346ce6c # main
         with:
           create-new-comment: true
           multiple-files: |

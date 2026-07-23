@@ -1,0 +1,99 @@
+name: Test JUnit XML test statistics
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          pytest-coverage-path: tests/fixtures/pytest-coverage.txt
+          junitxml-path: tests/fixtures/junit.xml
+          junitxml-title: 'Test Results'
+          hide-comment: 'true'
+
+      - name: Assert tests output
+        env:
+          TESTS: ${{ steps.action.outputs.tests }}
+        run: |
+          echo "tests: $TESTS"
+          if [ -z "$TESTS" ]; then
+            echo "FAIL: tests output is empty"
+            exit 1
+          fi
+          if [ "$TESTS" != "5" ]; then
+            echo "FAIL: expected '5' tests but got '$TESTS'"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert skipped output
+        env:
+          SKIPPED: ${{ steps.action.outputs.skipped }}
+        run: |
+          echo "skipped: $SKIPPED"
+          if [ "$SKIPPED" != "1" ]; then
+            echo "FAIL: expected '1' skipped but got '$SKIPPED'"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert failures output
+        env:
+          FAILURES: ${{ steps.action.outputs.failures }}
+        run: |
+          echo "failures: $FAILURES"
+          if [ "$FAILURES" != "1" ]; then
+            echo "FAIL: expected '1' failure but got '$FAILURES'"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert errors output
+        env:
+          ERRORS: ${{ steps.action.outputs.errors }}
+        run: |
+          echo "errors: $ERRORS"
+          if [ "$ERRORS" != "0" ]; then
+            echo "FAIL: expected '0' errors but got '$ERRORS'"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert time output is set
+        env:
+          TIME: ${{ steps.action.outputs.time }}
+        run: |
+          echo "time: $TIME"
+          if [ -z "$TIME" ]; then
+            echo "FAIL: time output is empty"
+            exit 1
+          fi
+          echo "PASS: time is '$TIME'"
+
+      - name: Assert summaryReport output is set
+        env:
+          SUMMARY: ${{ steps.action.outputs.summaryReport }}
+        run: |
+          echo "summaryReport length: ${#SUMMARY}"
+          if [ -z "$SUMMARY" ]; then
+            echo "FAIL: summaryReport output is empty"
+            exit 1
+          fi
+          echo "PASS: summaryReport is non-empty"
+
+      - name: Assert notSuccessTestInfo output is set
+        env:
+          INFO: ${{ steps.action.outputs.notSuccessTestInfo }}
+        run: |
+          echo "notSuccessTestInfo: $INFO"
+          if [ -z "$INFO" ]; then
+            echo "FAIL: notSuccessTestInfo output is empty"
+            exit 1
+          fi
+          echo "PASS: notSuccessTestInfo is '$INFO'"

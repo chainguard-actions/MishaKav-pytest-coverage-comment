@@ -1,0 +1,39 @@
+<?xml version="1.0" ?>
+<coverage version="6.4.4" timestamp="1660000000" lines-valid="60" lines-covered="51" line-rate="0.85" branches-covered="0" branches-valid="0" branch-rate="0" complexity="0">
+	<packages>
+		<package name="src" line-rate="0.85" branch-rate="0" complexity="0">
+			<classes>
+				<class name="__init__.py" filename="src/__init__.py" complexity="0" line-rate="1" branch-rate="0">
+					<methods/>
+					<lines/>
+				</class>
+				<class name="calculator.py" filename="src/calculator.py" complexity="0" line-rate="0.85" branch-rate="0">
+					<methods/>
+					<lines>
+						<line number="15" hits="0"/>
+						<line number="16" hits="0"/>
+						<line number="17" hits="0"/>
+						<line number="42" hits="0"/>
+					</lines>
+				</class>
+				<class name="utils.py" filename="src/utils.py" complexity="0" line-rate="0.9" branch-rate="0">
+					<methods/>
+					<lines>
+						<line number="25" hits="0"/>
+					</lines>
+				</class>
+				<class name="models.py" filename="src/models.py" complexity="0" line-rate="0.8333" branch-rate="0">
+					<methods/>
+					<lines>
+						<line number="10" hits="0"/>
+						<line number="20" hits="0"/>
+						<line number="21" hits="0"/>
+						<line number="22" hits="0"/>
+						<line number="23" hits="0"/>
+						<line number="45" hits="0"/>
+					</lines>
+				</class>
+			</classes>
+		</package>
+	</packages>
+</coverage>

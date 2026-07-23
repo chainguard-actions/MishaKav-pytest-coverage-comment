@@ -1,0 +1,11 @@
+---------- coverage: platform linux, python 3.10.0-final-0 ----------
+Name                      Stmts   Miss  Cover   Missing
+---------------------------------------------------------
+src/__init__.py               0      0   100%
+src/calculator.py            20      3    85%   15-17, 42
+src/utils.py                 10      1    90%   25
+src/models.py                30      5    83%   10, 20-23, 45
+---------------------------------------------------------
+TOTAL                        60      9    85%
+
+4 passed, 1 skipped in 1.23s

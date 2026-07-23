@@ -1,0 +1,41 @@
+name: Test hide badge and report options
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          pytest-coverage-path: tests/fixtures/pytest-coverage.txt
+          hide-comment: 'true'
+          hide-badge: 'true'
+          hide-report: 'true'
+          hide-emoji: 'true'
+
+      - name: Assert coverage output is still produced when hiding badge/report
+        env:
+          COVERAGE: ${{ steps.action.outputs.coverage }}
+        run: |
+          echo "coverage: $COVERAGE"
+          if [ -z "$COVERAGE" ]; then
+            echo "FAIL: coverage output is empty even with hide-badge/hide-report"
+            exit 1
+          fi
+          echo "PASS: coverage output is '$COVERAGE'"
+
+      - name: Assert color output is still produced
+        env:
+          COLOR: ${{ steps.action.outputs.color }}
+        run: |
+          echo "color: $COLOR"
+          if [ -z "$COLOR" ]; then
+            echo "FAIL: color output is empty"
+            exit 1
+          fi
+          echo "PASS: color output is '$COLOR'"
