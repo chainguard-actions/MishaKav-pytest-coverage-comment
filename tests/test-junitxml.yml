@@ -1,0 +1,78 @@
+name: Test JUnit XML test statistics
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create pytest coverage text file
+        run: |
+          cat > /tmp/pytest-coverage.txt << 'EOF'
+          ----------- coverage: platform linux, python 3.9.7-final-0 -----------
+          Name                      Stmts   Miss  Cover   Missing
+          ---------------------------------------------------------
+          src/main.py                  50     10    80%   20-25, 40-44
+          ---------------------------------------------------------
+          TOTAL                        50     10    80%
+
+          ==================== 8 passed, 1 skipped, 1 failed in 2.50s ====================
+          EOF
+
+      - name: Create JUnit XML file
+        run: |
+          cat > /tmp/junit.xml << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <testsuites>
+            <testsuite name="pytest" errors="0" failures="1" skipped="1" tests="10" time="2.500">
+              <testcase classname="tests.test_main" name="test_success" time="0.100"/>
+              <testcase classname="tests.test_main" name="test_another" time="0.200"/>
+              <testcase classname="tests.test_main" name="test_skipped" time="0.001">
+                <skipped message="skip reason"/>
+              </testcase>
+              <testcase classname="tests.test_main" name="test_failure" time="0.300">
+                <failure message="AssertionError">assert 1 == 2</failure>
+              </testcase>
+            </testsuite>
+          </testsuites>
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          pytest-coverage-path: /tmp/pytest-coverage.txt
+          junitxml-path: /tmp/junit.xml
+          junitxml-title: 'Test Results'
+          hide-comment: 'true'
+
+      - name: Assert tests output is set
+        env:
+          TESTS: ${{ steps.action.outputs.tests }}
+          SKIPPED: ${{ steps.action.outputs.skipped }}
+          FAILURES: ${{ steps.action.outputs.failures }}
+          ERRORS: ${{ steps.action.outputs.errors }}
+          TIME: ${{ steps.action.outputs.time }}
+        run: |
+          echo "tests: $TESTS"
+          echo "skipped: $SKIPPED"
+          echo "failures: $FAILURES"
+          echo "errors: $ERRORS"
+          echo "time: $TIME"
+          if [ -z "$TESTS" ]; then
+            echo "FAIL: expected tests output to be non-empty"
+            exit 1
+          fi
+          echo "PASS: tests=$TESTS skipped=$SKIPPED failures=$FAILURES errors=$ERRORS time=$TIME"
+
+      - name: Assert summaryReport output is set
+        env:
+          SUMMARY: ${{ steps.action.outputs.summaryReport }}
+        run: |
+          echo "summaryReport: $SUMMARY"
+          if [ -z "$SUMMARY" ]; then
+            echo "FAIL: expected summaryReport output to be non-empty"
+            exit 1
+          fi
+          echo "PASS"

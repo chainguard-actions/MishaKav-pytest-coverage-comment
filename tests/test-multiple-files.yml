@@ -1,0 +1,50 @@
+name: Test multiple coverage files (monorepo)
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create backend coverage text file
+        run: |
+          cat > /tmp/backend-coverage.txt << 'EOF'
+          ----------- coverage: platform linux, python 3.9.7-final-0 -----------
+          Name                      Stmts   Miss  Cover   Missing
+          ---------------------------------------------------------
+          backend/api.py               60      6    90%   50-55
+          ---------------------------------------------------------
+          TOTAL                        60      6    90%
+
+          ==================== 6 passed in 1.00s ====================
+          EOF
+
+      - name: Create frontend coverage text file
+        run: |
+          cat > /tmp/frontend-coverage.txt << 'EOF'
+          ----------- coverage: platform linux, python 3.9.7-final-0 -----------
+          Name                      Stmts   Miss  Cover   Missing
+          ---------------------------------------------------------
+          frontend/views.py            30      9    70%   10-18
+          ---------------------------------------------------------
+          TOTAL                        30      9    70%
+
+          ==================== 4 passed in 0.50s ====================
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          hide-comment: 'true'
+          multiple-files: |
+            Backend API, /tmp/backend-coverage.txt,
+            Frontend, /tmp/frontend-coverage.txt,
+
+      - name: Assert action completed without error
+        env:
+          COVERAGE: ${{ steps.action.outputs.coverage }}
+        run: |
+          echo "coverage output: $COVERAGE"
+          echo "PASS: action completed successfully with multiple-files input"

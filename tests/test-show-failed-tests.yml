@@ -1,0 +1,79 @@
+name: Test show-failed-tests option
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create pytest coverage text file
+        run: |
+          cat > /tmp/pytest-coverage.txt << 'EOF'
+          ----------- coverage: platform linux, python 3.9.7-final-0 -----------
+          Name                      Stmts   Miss  Cover   Missing
+          ---------------------------------------------------------
+          src/main.py                  50     15    70%   20-34
+          ---------------------------------------------------------
+          TOTAL                        50     15    70%
+
+          ==================== 3 passed, 2 failed in 1.80s ====================
+          EOF
+
+      - name: Create JUnit XML with failures
+        run: |
+          cat > /tmp/junit-failures.xml << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <testsuites>
+            <testsuite name="pytest" errors="0" failures="2" skipped="0" tests="5" time="1.800">
+              <testcase classname="tests.test_main" name="test_pass_1" time="0.100"/>
+              <testcase classname="tests.test_main" name="test_pass_2" time="0.200"/>
+              <testcase classname="tests.test_main" name="test_pass_3" time="0.150"/>
+              <testcase classname="tests.test_main" name="test_fail_1" time="0.500">
+                <failure message="AssertionError: expected True but got False">
+                  assert result == True
+                  AssertionError: expected True but got False
+                </failure>
+              </testcase>
+              <testcase classname="tests.test_main" name="test_fail_2" time="0.850">
+                <failure message="ValueError: invalid value">
+                  ValueError: invalid value
+                </failure>
+              </testcase>
+            </testsuite>
+          </testsuites>
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          pytest-coverage-path: /tmp/pytest-coverage.txt
+          junitxml-path: /tmp/junit-failures.xml
+          show-failed-tests: 'true'
+          max-failed-tests: '10'
+          hide-comment: 'true'
+
+      - name: Assert failures output is set
+        env:
+          FAILURES: ${{ steps.action.outputs.failures }}
+          TESTS: ${{ steps.action.outputs.tests }}
+        run: |
+          echo "failures: $FAILURES"
+          echo "tests: $TESTS"
+          if [ -z "$FAILURES" ]; then
+            echo "FAIL: expected failures output to be non-empty"
+            exit 1
+          fi
+          echo "PASS: failures=$FAILURES tests=$TESTS"
+
+      - name: Assert failedTestsHtml output is set when there are failures
+        env:
+          FAILED_HTML: ${{ steps.action.outputs.failedTestsHtml }}
+        run: |
+          echo "failedTestsHtml: $FAILED_HTML"
+          if [ -z "$FAILED_HTML" ]; then
+            echo "FAIL: expected failedTestsHtml to be non-empty when show-failed-tests=true and there are failures"
+            exit 1
+          fi
+          echo "PASS"

@@ -1,0 +1,54 @@
+name: Test basic coverage from text file
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create pytest coverage text file
+        run: |
+          cat > /tmp/pytest-coverage.txt << 'EOF'
+          ----------- coverage: platform linux, python 3.9.7-final-0 -----------
+          Name                      Stmts   Miss  Cover   Missing
+          ---------------------------------------------------------
+          src/__init__.py               0      0   100%
+          src/main.py                  50     10    80%   20-25, 40-44
+          src/utils.py                 30      5    83%   15-19
+          ---------------------------------------------------------
+          TOTAL                        80     15    81%
+
+          ==================== 10 passed in 1.23s ====================
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          pytest-coverage-path: /tmp/pytest-coverage.txt
+          hide-comment: 'true'
+
+      - name: Assert coverage output is set
+        env:
+          COVERAGE: ${{ steps.action.outputs.coverage }}
+          COLOR: ${{ steps.action.outputs.color }}
+        run: |
+          echo "coverage: $COVERAGE"
+          echo "color: $COLOR"
+          if [ -z "$COVERAGE" ]; then
+            echo "FAIL: expected coverage output to be non-empty"
+            exit 1
+          fi
+          echo "PASS: coverage=$COVERAGE color=$COLOR"
+
+      - name: Assert coverageHtml output is set
+        env:
+          COVERAGE_HTML: ${{ steps.action.outputs.coverageHtml }}
+        run: |
+          echo "coverageHtml length: ${#COVERAGE_HTML}"
+          if [ -z "$COVERAGE_HTML" ]; then
+            echo "FAIL: expected coverageHtml output to be non-empty"
+            exit 1
+          fi
+          echo "PASS"
