@@ -1,0 +1,42 @@
+name: Test 100% coverage produces brightgreen badge
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Copy fixture coverage file to workspace
+        run: cp "$GITHUB_WORKSPACE/tests/fixtures/pytest-coverage-100.txt" "$GITHUB_WORKSPACE/pytest-coverage.txt"
+
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          pytest-coverage-path: ./pytest-coverage.txt
+          hide-comment: 'true'
+          title: 'Full Coverage Report'
+          default-branch: 'main'
+
+      - name: Assert coverage is 100%
+        env:
+          ACTUAL: ${{ steps.action.outputs.coverage }}
+        run: |
+          echo "actual coverage: $ACTUAL"
+          if [ "$ACTUAL" != "100%" ]; then
+            echo "FAIL: expected '100%' but got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert color is brightgreen for 100% coverage
+        env:
+          ACTUAL: ${{ steps.action.outputs.color }}
+        run: |
+          echo "actual color: $ACTUAL"
+          if [ "$ACTUAL" != "brightgreen" ]; then
+            echo "FAIL: expected 'brightgreen' for 100% coverage but got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"

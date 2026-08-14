@@ -1,0 +1,100 @@
+name: Test JUnit XML parsing for test statistics
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Copy fixture files to workspace
+        run: |
+          cp "$GITHUB_WORKSPACE/tests/fixtures/pytest-coverage.txt" "$GITHUB_WORKSPACE/pytest-coverage.txt"
+          cp "$GITHUB_WORKSPACE/tests/fixtures/junit.xml" "$GITHUB_WORKSPACE/junit.xml"
+
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          pytest-coverage-path: ./pytest-coverage.txt
+          junitxml-path: ./junit.xml
+          junitxml-title: 'Test Summary'
+          hide-comment: 'true'
+          default-branch: 'main'
+
+      - name: Assert tests output is set
+        env:
+          ACTUAL: ${{ steps.action.outputs.tests }}
+        run: |
+          echo "actual tests: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: tests output is empty"
+            exit 1
+          fi
+          echo "PASS: tests='$ACTUAL'"
+
+      - name: Assert tests count is 10
+        env:
+          ACTUAL: ${{ steps.action.outputs.tests }}
+        run: |
+          echo "actual tests: $ACTUAL"
+          if [ "$ACTUAL" != "10" ]; then
+            echo "FAIL: expected '10' tests but got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert skipped count is 2
+        env:
+          ACTUAL: ${{ steps.action.outputs.skipped }}
+        run: |
+          echo "actual skipped: $ACTUAL"
+          if [ "$ACTUAL" != "2" ]; then
+            echo "FAIL: expected '2' skipped but got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert failures count is 1
+        env:
+          ACTUAL: ${{ steps.action.outputs.failures }}
+        run: |
+          echo "actual failures: $ACTUAL"
+          if [ "$ACTUAL" != "1" ]; then
+            echo "FAIL: expected '1' failure but got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert errors count is 0
+        env:
+          ACTUAL: ${{ steps.action.outputs.errors }}
+        run: |
+          echo "actual errors: $ACTUAL"
+          if [ "$ACTUAL" != "0" ]; then
+            echo "FAIL: expected '0' errors but got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert time output is set
+        env:
+          ACTUAL: ${{ steps.action.outputs.time }}
+        run: |
+          echo "actual time: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: time output is empty"
+            exit 1
+          fi
+          echo "PASS: time='$ACTUAL'"
+
+      - name: Assert summaryReport is populated
+        env:
+          ACTUAL: ${{ steps.action.outputs.summaryReport }}
+        run: |
+          echo "actual summaryReport length: ${#ACTUAL}"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: summaryReport output is empty"
+            exit 1
+          fi
+          echo "PASS"

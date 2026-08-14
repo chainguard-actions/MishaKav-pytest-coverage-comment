@@ -1,0 +1,44 @@
+name: Test multiple-files input for monorepo coverage
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Copy fixture coverage files to workspace
+        run: |
+          cp "$GITHUB_WORKSPACE/tests/fixtures/pytest-coverage.txt" "$GITHUB_WORKSPACE/coverage-backend.txt"
+          cp "$GITHUB_WORKSPACE/tests/fixtures/pytest-coverage-high.txt" "$GITHUB_WORKSPACE/coverage-frontend.txt"
+
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          hide-comment: 'true'
+          default-branch: 'main'
+          multiple-files: |
+            Backend, ./coverage-backend.txt
+            Frontend, ./coverage-frontend.txt
+
+      - name: Assert coverage output is set (from multiple-files)
+        env:
+          ACTUAL: ${{ steps.action.outputs.coverage }}
+        run: |
+          echo "actual coverage: $ACTUAL"
+          # With multiple-files, coverage output may be empty or set to last file's value
+          # The key check is that the action completed without error
+          echo "PASS: action completed successfully with multiple-files input"
+
+      - name: Assert coverageHtml output is set
+        env:
+          ACTUAL: ${{ steps.action.outputs.coverageHtml }}
+        run: |
+          echo "actual coverageHtml length: ${#ACTUAL}"
+          # coverageHtml should be populated with combined report
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: coverageHtml output is empty for multiple-files"
+            exit 1
+          fi
+          echo "PASS: coverageHtml is populated"

@@ -1,0 +1,54 @@
+name: Test high coverage percentage and color
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Copy fixture coverage file to workspace
+        run: cp "$GITHUB_WORKSPACE/tests/fixtures/pytest-coverage-high.txt" "$GITHUB_WORKSPACE/pytest-coverage.txt"
+
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          pytest-coverage-path: ./pytest-coverage.txt
+          hide-comment: 'true'
+          title: 'High Coverage Report'
+          badge-title: 'Coverage'
+          default-branch: 'main'
+
+      - name: Assert coverage is 98%
+        env:
+          ACTUAL: ${{ steps.action.outputs.coverage }}
+        run: |
+          echo "actual coverage: $ACTUAL"
+          if [ "$ACTUAL" != "98%" ]; then
+            echo "FAIL: expected '98%' but got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert color is green or brightgreen (high coverage)
+        env:
+          ACTUAL: ${{ steps.action.outputs.color }}
+        run: |
+          echo "actual color: $ACTUAL"
+          if [ "$ACTUAL" != "green" ] && [ "$ACTUAL" != "brightgreen" ]; then
+            echo "FAIL: expected 'green' or 'brightgreen' for 98% coverage but got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS: color is '$ACTUAL'"
+
+      - name: Assert coverageHtml is populated
+        env:
+          ACTUAL: ${{ steps.action.outputs.coverageHtml }}
+        run: |
+          echo "actual coverageHtml length: ${#ACTUAL}"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: coverageHtml output is empty"
+            exit 1
+          fi
+          echo "PASS"

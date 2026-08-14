@@ -1,0 +1,53 @@
+name: Test XML coverage report parsing
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Copy fixture XML coverage file to workspace
+        run: cp "$GITHUB_WORKSPACE/tests/fixtures/coverage.xml" "$GITHUB_WORKSPACE/coverage.xml"
+
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          pytest-xml-coverage-path: ./coverage.xml
+          hide-comment: 'true'
+          title: 'XML Coverage Report'
+          default-branch: 'main'
+
+      - name: Assert coverage output is set
+        env:
+          ACTUAL: ${{ steps.action.outputs.coverage }}
+        run: |
+          echo "actual coverage: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: coverage output is empty"
+            exit 1
+          fi
+          echo "PASS: coverage='$ACTUAL'"
+
+      - name: Assert color output is set
+        env:
+          ACTUAL: ${{ steps.action.outputs.color }}
+        run: |
+          echo "actual color: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: color output is empty"
+            exit 1
+          fi
+          echo "PASS: color='$ACTUAL'"
+
+      - name: Assert coverage is 100% (all lines covered in fixture)
+        env:
+          ACTUAL: ${{ steps.action.outputs.coverage }}
+        run: |
+          echo "actual coverage: $ACTUAL"
+          if [ "$ACTUAL" != "100%" ]; then
+            echo "FAIL: expected '100%' from XML fixture but got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"
