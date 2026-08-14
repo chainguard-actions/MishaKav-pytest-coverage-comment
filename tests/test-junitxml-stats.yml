@@ -1,0 +1,135 @@
+name: Test JUnit XML test statistics
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create pytest coverage text file
+        run: |
+          cat > /tmp/pytest-coverage.txt << 'EOF'
+          ---------- coverage: platform linux, python 3.9.7-final-0 ----------
+          Name                      Stmts   Miss  Cover   Missing
+          ---------------------------------------------------------
+          src/__init__.py               0      0   100%
+          src/app.py                   50      5    90%   20-24
+          ---------------------------------------------------------
+          TOTAL                        50      5    90%
+
+          ========================= 10 passed in 2.50s =========================
+          EOF
+
+      - name: Create JUnit XML file
+        run: |
+          cat > /tmp/junit.xml << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <testsuites>
+            <testsuite name="pytest" errors="0" failures="1" skipped="2" tests="10" time="2.500">
+              <testcase classname="tests.test_app" name="test_success_1" time="0.100"/>
+              <testcase classname="tests.test_app" name="test_success_2" time="0.200"/>
+              <testcase classname="tests.test_app" name="test_success_3" time="0.150"/>
+              <testcase classname="tests.test_app" name="test_success_4" time="0.100"/>
+              <testcase classname="tests.test_app" name="test_success_5" time="0.100"/>
+              <testcase classname="tests.test_app" name="test_success_6" time="0.100"/>
+              <testcase classname="tests.test_app" name="test_success_7" time="0.100"/>
+              <testcase classname="tests.test_app" name="test_skipped_1" time="0.000">
+                <skipped message="skip reason 1"/>
+              </testcase>
+              <testcase classname="tests.test_app" name="test_skipped_2" time="0.000">
+                <skipped message="skip reason 2"/>
+              </testcase>
+              <testcase classname="tests.test_app" name="test_failed_1" time="0.500">
+                <failure message="AssertionError">assert False</failure>
+              </testcase>
+            </testsuite>
+          </testsuites>
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          pytest-coverage-path: /tmp/pytest-coverage.txt
+          junitxml-path: /tmp/junit.xml
+          junitxml-title: 'Test Results'
+          hide-comment: 'true'
+
+      - name: Assert tests output
+        env:
+          ACTUAL: ${{ steps.action.outputs.tests }}
+        run: |
+          echo "actual tests: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: tests output is empty"
+            exit 1
+          fi
+          echo "PASS: tests output is '$ACTUAL'"
+
+      - name: Assert failures output
+        env:
+          ACTUAL: ${{ steps.action.outputs.failures }}
+        run: |
+          echo "actual failures: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: failures output is empty"
+            exit 1
+          fi
+          if [ "$ACTUAL" != "1" ]; then
+            echo "FAIL: expected failures=1, got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS: failures output is '$ACTUAL'"
+
+      - name: Assert skipped output
+        env:
+          ACTUAL: ${{ steps.action.outputs.skipped }}
+        run: |
+          echo "actual skipped: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: skipped output is empty"
+            exit 1
+          fi
+          if [ "$ACTUAL" != "2" ]; then
+            echo "FAIL: expected skipped=2, got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS: skipped output is '$ACTUAL'"
+
+      - name: Assert errors output
+        env:
+          ACTUAL: ${{ steps.action.outputs.errors }}
+        run: |
+          echo "actual errors: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: errors output is empty"
+            exit 1
+          fi
+          if [ "$ACTUAL" != "0" ]; then
+            echo "FAIL: expected errors=0, got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS: errors output is '$ACTUAL'"
+
+      - name: Assert time output
+        env:
+          ACTUAL: ${{ steps.action.outputs.time }}
+        run: |
+          echo "actual time: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: time output is empty"
+            exit 1
+          fi
+          echo "PASS: time output is '$ACTUAL'"
+
+      - name: Assert summaryReport output
+        env:
+          ACTUAL: ${{ steps.action.outputs.summaryReport }}
+        run: |
+          echo "actual summaryReport length: ${#ACTUAL}"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: summaryReport output is empty"
+            exit 1
+          fi
+          echo "PASS: summaryReport output is set"

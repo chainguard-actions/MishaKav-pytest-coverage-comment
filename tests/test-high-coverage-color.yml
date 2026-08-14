@@ -1,0 +1,51 @@
+name: Test high coverage produces brightgreen color
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create pytest coverage text file with 100% coverage
+        run: |
+          cat > /tmp/pytest-coverage.txt << 'EOF'
+          ---------- coverage: platform linux, python 3.9.7-final-0 ----------
+          Name                      Stmts   Miss  Cover   Missing
+          ---------------------------------------------------------
+          src/__init__.py               0      0   100%
+          src/main.py                  10      0   100%
+          ---------------------------------------------------------
+          TOTAL                        10      0   100%
+
+          ========================= 3 passed in 0.30s =========================
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          pytest-coverage-path: /tmp/pytest-coverage.txt
+          hide-comment: 'true'
+
+      - name: Assert coverage is 100%
+        env:
+          ACTUAL: ${{ steps.action.outputs.coverage }}
+        run: |
+          echo "actual coverage: $ACTUAL"
+          if [ "$ACTUAL" != "100%" ]; then
+            echo "FAIL: expected coverage=100%, got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS: coverage is 100%"
+
+      - name: Assert color is brightgreen for 100% coverage
+        env:
+          ACTUAL: ${{ steps.action.outputs.color }}
+        run: |
+          echo "actual color: $ACTUAL"
+          if [ "$ACTUAL" != "brightgreen" ]; then
+            echo "FAIL: expected color=brightgreen for 100% coverage, got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS: color is brightgreen"

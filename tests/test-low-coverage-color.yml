@@ -1,0 +1,52 @@
+name: Test low coverage produces red color
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create pytest coverage text file with low coverage
+        run: |
+          cat > /tmp/pytest-coverage.txt << 'EOF'
+          ---------- coverage: platform linux, python 3.9.7-final-0 ----------
+          Name                      Stmts   Miss  Cover   Missing
+          ---------------------------------------------------------
+          src/__init__.py              10      9    10%   2-10
+          src/main.py                  50     45    10%   5-50
+          src/helpers.py               40     36    10%   3-40
+          ---------------------------------------------------------
+          TOTAL                       100     90    10%
+
+          ========================= 1 passed in 0.10s =========================
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          pytest-coverage-path: /tmp/pytest-coverage.txt
+          hide-comment: 'true'
+
+      - name: Assert coverage is 10%
+        env:
+          ACTUAL: ${{ steps.action.outputs.coverage }}
+        run: |
+          echo "actual coverage: $ACTUAL"
+          if [ "$ACTUAL" != "10%" ]; then
+            echo "FAIL: expected coverage=10%, got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS: coverage is 10%"
+
+      - name: Assert color is red for low coverage
+        env:
+          ACTUAL: ${{ steps.action.outputs.color }}
+        run: |
+          echo "actual color: $ACTUAL"
+          if [ "$ACTUAL" != "red" ]; then
+            echo "FAIL: expected color=red for 10% coverage, got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS: color is red"

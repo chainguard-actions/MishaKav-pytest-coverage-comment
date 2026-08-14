@@ -1,0 +1,104 @@
+name: Test JUnit XML test statistics
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Copy fixture files to workspace
+        run: |
+          cp "$GITHUB_WORKSPACE/tests/fixtures/pytest-coverage.txt" "$GITHUB_WORKSPACE/pytest-coverage.txt"
+          cp "$GITHUB_WORKSPACE/tests/fixtures/junit.xml" "$GITHUB_WORKSPACE/junit.xml"
+
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          pytest-coverage-path: ./pytest-coverage.txt
+          junitxml-path: ./junit.xml
+          junitxml-title: 'Test Summary'
+          hide-comment: 'true'
+          default-branch: 'main'
+
+      - name: Assert tests output is set
+        env:
+          ACTUAL: ${{ steps.action.outputs.tests }}
+        run: |
+          echo "actual tests: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: expected tests output to be non-empty"
+            exit 1
+          fi
+          if ! echo "$ACTUAL" | grep -qE '^[0-9]+$'; then
+            echo "FAIL: expected tests to be numeric, got: $ACTUAL"
+            exit 1
+          fi
+          echo "PASS: tests=$ACTUAL"
+
+      - name: Assert failures output is set
+        env:
+          ACTUAL: ${{ steps.action.outputs.failures }}
+        run: |
+          echo "actual failures: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: expected failures output to be non-empty"
+            exit 1
+          fi
+          if ! echo "$ACTUAL" | grep -qE '^[0-9]+$'; then
+            echo "FAIL: expected failures to be numeric, got: $ACTUAL"
+            exit 1
+          fi
+          echo "PASS: failures=$ACTUAL"
+
+      - name: Assert skipped output is set
+        env:
+          ACTUAL: ${{ steps.action.outputs.skipped }}
+        run: |
+          echo "actual skipped: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: expected skipped output to be non-empty"
+            exit 1
+          fi
+          if ! echo "$ACTUAL" | grep -qE '^[0-9]+$'; then
+            echo "FAIL: expected skipped to be numeric, got: $ACTUAL"
+            exit 1
+          fi
+          echo "PASS: skipped=$ACTUAL"
+
+      - name: Assert time output is set
+        env:
+          ACTUAL: ${{ steps.action.outputs.time }}
+        run: |
+          echo "actual time: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: expected time output to be non-empty"
+            exit 1
+          fi
+          echo "PASS: time=$ACTUAL"
+
+      - name: Assert summaryReport output is set
+        env:
+          ACTUAL: ${{ steps.action.outputs.summaryReport }}
+        run: |
+          echo "actual summaryReport length: ${#ACTUAL}"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: expected summaryReport output to be non-empty"
+            exit 1
+          fi
+          echo "PASS: summaryReport is non-empty"
+
+      - name: Assert notSuccessTestInfo output is set
+        env:
+          ACTUAL: ${{ steps.action.outputs.notSuccessTestInfo }}
+        run: |
+          echo "actual notSuccessTestInfo: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: expected notSuccessTestInfo output to be non-empty (we have failures and skipped)"
+            exit 1
+          fi
+          echo "PASS: notSuccessTestInfo is non-empty"

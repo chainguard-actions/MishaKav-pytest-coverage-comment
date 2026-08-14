@@ -1,0 +1,48 @@
+name: Test hide-badge and hide-report options
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Copy fixture coverage file to workspace
+        run: cp "$GITHUB_WORKSPACE/tests/fixtures/pytest-coverage.txt" "$GITHUB_WORKSPACE/pytest-coverage.txt"
+
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          pytest-coverage-path: ./pytest-coverage.txt
+          hide-comment: 'true'
+          hide-badge: 'true'
+          hide-report: 'true'
+          hide-emoji: 'true'
+          title: 'Hidden Options Report'
+          default-branch: 'main'
+
+      - name: Assert coverage output is still set when badge and report are hidden
+        env:
+          ACTUAL: ${{ steps.action.outputs.coverage }}
+        run: |
+          echo "actual coverage: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: expected coverage output even when badge/report are hidden"
+            exit 1
+          fi
+          echo "PASS: coverage=$ACTUAL"
+
+      - name: Assert color output is still set when badge and report are hidden
+        env:
+          ACTUAL: ${{ steps.action.outputs.color }}
+        run: |
+          echo "actual color: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: expected color output even when badge/report are hidden"
+            exit 1
+          fi
+          echo "PASS: color=$ACTUAL"
