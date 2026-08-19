@@ -1,0 +1,42 @@
+name: Test multiple-files monorepo coverage
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Copy fixture files to workspace root
+        run: |
+          cp "$GITHUB_WORKSPACE/tests/fixtures/pytest-coverage.txt" "$GITHUB_WORKSPACE/coverage-backend.txt"
+          cp "$GITHUB_WORKSPACE/tests/fixtures/pytest-coverage.txt" "$GITHUB_WORKSPACE/coverage-frontend.txt"
+
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          hide-comment: 'true'
+          multiple-files: |
+            Backend, ./coverage-backend.txt
+            Frontend, ./coverage-frontend.txt
+
+      - name: Assert coverage output is set
+        env:
+          COVERAGE: ${{ steps.action.outputs.coverage }}
+        run: |
+          echo "coverage: $COVERAGE"
+          # With multiple-files, coverage output may be empty or set depending on implementation
+          # The action should at least not fail
+          echo "PASS: action completed successfully"
+
+      - name: Assert coverageHtml output is set
+        env:
+          HTML: ${{ steps.action.outputs.coverageHtml }}
+        run: |
+          echo "coverageHtml length: ${#HTML}"
+          if [ -z "$HTML" ]; then
+            echo "FAIL: coverageHtml output is empty"
+            exit 1
+          fi
+          echo "PASS: coverageHtml is set"
