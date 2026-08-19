@@ -1,0 +1,45 @@
+name: Test text-instead-badge and remove-links options
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Copy fixture coverage file to expected path
+        run: |
+          cp "$GITHUB_WORKSPACE/tests/fixtures/pytest-coverage.txt" "$GITHUB_WORKSPACE/pytest-coverage.txt"
+
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          pytest-coverage-path: ./pytest-coverage.txt
+          hide-comment: 'true'
+          text-instead-badge: 'true'
+          remove-links-to-files: 'true'
+          remove-links-to-lines: 'true'
+          remove-link-from-badge: 'true'
+
+      - name: Assert coverage output is set
+        env:
+          COVERAGE: ${{ steps.action.outputs.coverage }}
+        run: |
+          echo "coverage: $COVERAGE"
+          if [ -z "$COVERAGE" ]; then
+            echo "FAIL: coverage output is empty"
+            exit 1
+          fi
+          echo "PASS: coverage=$COVERAGE"
+
+      - name: Assert coverageHtml output is set
+        env:
+          HTML: ${{ steps.action.outputs.coverageHtml }}
+        run: |
+          echo "coverageHtml length: ${#HTML}"
+          if [ -z "$HTML" ]; then
+            echo "FAIL: coverageHtml output is empty"
+            exit 1
+          fi
+          echo "PASS: coverageHtml is non-empty"

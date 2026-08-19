@@ -1,0 +1,100 @@
+name: Test XML coverage with JUnit XML statistics
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Copy fixture files to workspace
+        run: |
+          cp "$GITHUB_WORKSPACE/tests/fixtures/coverage.xml" "$GITHUB_WORKSPACE/coverage.xml"
+          cp "$GITHUB_WORKSPACE/tests/fixtures/junit.xml" "$GITHUB_WORKSPACE/junit.xml"
+
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          pytest-xml-coverage-path: ./coverage.xml
+          junitxml-path: ./junit.xml
+          junitxml-title: 'Test Results'
+          hide-comment: 'true'
+          title: 'XML Coverage Report'
+
+      - name: Assert coverage output is set
+        env:
+          COVERAGE: ${{ steps.action.outputs.coverage }}
+        run: |
+          echo "coverage: $COVERAGE"
+          if [ -z "$COVERAGE" ]; then
+            echo "FAIL: coverage output is empty"
+            exit 1
+          fi
+          echo "PASS: coverage=$COVERAGE"
+
+      - name: Assert color output is set
+        env:
+          COLOR: ${{ steps.action.outputs.color }}
+        run: |
+          echo "color: $COLOR"
+          if [ -z "$COLOR" ]; then
+            echo "FAIL: color output is empty"
+            exit 1
+          fi
+          echo "PASS: color=$COLOR"
+
+      - name: Assert tests output is set from JUnit XML
+        env:
+          TESTS: ${{ steps.action.outputs.tests }}
+        run: |
+          echo "tests: $TESTS"
+          if [ -z "$TESTS" ]; then
+            echo "FAIL: tests output is empty"
+            exit 1
+          fi
+          echo "PASS: tests=$TESTS"
+
+      - name: Assert failures output is set from JUnit XML
+        env:
+          FAILURES: ${{ steps.action.outputs.failures }}
+        run: |
+          echo "failures: $FAILURES"
+          if [ -z "$FAILURES" ]; then
+            echo "FAIL: failures output is empty"
+            exit 1
+          fi
+          echo "PASS: failures=$FAILURES"
+
+      - name: Assert skipped output is set from JUnit XML
+        env:
+          SKIPPED: ${{ steps.action.outputs.skipped }}
+        run: |
+          echo "skipped: $SKIPPED"
+          if [ -z "$SKIPPED" ]; then
+            echo "FAIL: skipped output is empty"
+            exit 1
+          fi
+          echo "PASS: skipped=$SKIPPED"
+
+      - name: Assert time output is set from JUnit XML
+        env:
+          TIME: ${{ steps.action.outputs.time }}
+        run: |
+          echo "time: $TIME"
+          if [ -z "$TIME" ]; then
+            echo "FAIL: time output is empty"
+            exit 1
+          fi
+          echo "PASS: time=$TIME"
+
+      - name: Assert summaryReport output is set
+        env:
+          SUMMARY: ${{ steps.action.outputs.summaryReport }}
+        run: |
+          echo "summaryReport length: ${#SUMMARY}"
+          if [ -z "$SUMMARY" ]; then
+            echo "FAIL: summaryReport output is empty"
+            exit 1
+          fi
+          echo "PASS: summaryReport is non-empty"

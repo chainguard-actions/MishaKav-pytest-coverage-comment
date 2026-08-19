@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+  <testsuite name="pytest" errors="0" failures="1" skipped="1" tests="5" time="0.423" timestamp="2022-08-20T12:00:00.000000" hostname="runner">
+    <testcase classname="tests.test_calculator" name="test_add" time="0.001"/>
+    <testcase classname="tests.test_calculator" name="test_subtract" time="0.001"/>
+    <testcase classname="tests.test_calculator" name="test_multiply" time="0.001">
+      <failure message="AssertionError: assert 6 == 7">AssertionError: assert 6 == 7</failure>
+    </testcase>
+    <testcase classname="tests.test_utils" name="test_format" time="0.001">
+      <skipped message="Skipped: not implemented yet"/>
+    </testcase>
+    <testcase classname="tests.test_utils" name="test_parse" time="0.001"/>
+  </testsuite>
+</testsuites>
