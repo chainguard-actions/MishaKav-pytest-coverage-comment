@@ -12,7 +12,7 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 | v1.11.0 | [`v1.11.0`](https://github.com/chainguard-actions/MishaKav-pytest-coverage-comment/tree/v1.11.0) | [`09c28b6`](https://github.com/MishaKav/pytest-coverage-comment/commit/09c28b6767e12a048e0b23e821ed03133ee48a1a) |
 | v1.5.0 | [`v1.5.0`](https://github.com/chainguard-actions/MishaKav-pytest-coverage-comment/tree/v1.5.0) | — |
 | v1.6.0 | [`v1.6.0`](https://github.com/chainguard-actions/MishaKav-pytest-coverage-comment/tree/v1.6.0) | — |
-| v1.7.0 | [`v1.7.0`](https://github.com/chainguard-actions/MishaKav-pytest-coverage-comment/tree/v1.7.0) | — |
+| v1.7.0 | [`v1.7.0`](https://github.com/chainguard-actions/MishaKav-pytest-coverage-comment/tree/v1.7.0) | [`6b219ea`](https://github.com/MishaKav/pytest-coverage-comment/commit/6b219eafc7094a43abafd1fbd0c6c48de8cc2141) |
 | v1.7.1 | [`v1.7.1`](https://github.com/chainguard-actions/MishaKav-pytest-coverage-comment/tree/v1.7.1) | — |
 | v1.7.2 | [`v1.7.2`](https://github.com/chainguard-actions/MishaKav-pytest-coverage-comment/tree/v1.7.2) | — |
 | v1.7.3 | [`v1.7.3`](https://github.com/chainguard-actions/MishaKav-pytest-coverage-comment/tree/v1.7.3) | [`810a628`](https://github.com/MishaKav/pytest-coverage-comment/commit/810a6287229783112454519ad7db802b6fb47be3) |
