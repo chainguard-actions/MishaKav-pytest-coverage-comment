@@ -1,0 +1,55 @@
+name: Test hide badge and report options
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create pytest coverage txt file
+        run: |
+          cat > /tmp/pytest-coverage.txt << 'EOF'
+          ---------- coverage: platform linux, python 3.9.7-final-0 ----------
+          Name                      Stmts   Miss  Cover   Missing
+          ---------------------------------------------------------
+          src/__init__.py               0      0   100%
+          src/main.py                  50     10    80%   20-30
+          ---------------------------------------------------------
+          TOTAL                        50     10    80%
+
+          ========================= 5 passed in 0.75s =========================
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          pytest-coverage-path: /tmp/pytest-coverage.txt
+          hide-comment: 'true'
+          hide-badge: 'true'
+          hide-report: 'true'
+          hide-emoji: 'true'
+          title: 'Hidden Options Test'
+
+      - name: Assert coverage output is still produced when badge/report hidden
+        env:
+          COVERAGE: ${{ steps.action.outputs.coverage }}
+        run: |
+          echo "coverage: $COVERAGE"
+          if [ -z "$COVERAGE" ]; then
+            echo "FAIL: coverage output is empty even with hide-badge/hide-report"
+            exit 1
+          fi
+          echo "PASS: coverage=$COVERAGE"
+
+      - name: Assert color output is still produced when badge/report hidden
+        env:
+          COLOR: ${{ steps.action.outputs.color }}
+        run: |
+          echo "color: $COLOR"
+          if [ -z "$COLOR" ]; then
+            echo "FAIL: color output is empty even with hide-badge/hide-report"
+            exit 1
+          fi
+          echo "PASS: color=$COLOR"
