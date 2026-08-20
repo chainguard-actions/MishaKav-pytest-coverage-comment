@@ -1,0 +1,34 @@
+name: Test Branch
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+
+permissions:
+  contents: write
+  checks: write
+  pull-requests: write
+
+jobs:
+  test-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: Pytest coverage comment
+        id: coverageComment
+        uses: MishaKav/pytest-coverage-comment@09c28b6767e12a048e0b23e821ed03133ee48a1a # main
+        with:
+          pytest-xml-coverage-path: ./data/coverage_1.xml
+          # pytest-coverage-path: ./data/pytest-coverage_4.txt
+          junitxml-path: ./data/pytest_1.xml
+
+      - name: Check the output coverage
+        env:
+          COVERAGE: ${{ steps.coverageComment.outputs.coverage }}
+          COLOR: ${{ steps.coverageComment.outputs.color }}
+          COVERAGE_HTML: ${{ steps.coverageComment.outputs.coverageHtml }}
+        run: |
+          echo "Coverage Report - $COVERAGE"
+          echo "Coverage Color - $COLOR"
+          echo "Coverage Html - $COVERAGE_HTML"
