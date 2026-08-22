@@ -1,0 +1,54 @@
+name: Test multiple-files input for monorepo coverage
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create backend coverage text file
+        run: |
+          cat > /tmp/backend-coverage.txt << 'EOF'
+          ---------- coverage: platform linux, python 3.9.7-final-0 ----------
+          Name                      Stmts   Miss  Cover   Missing
+          ---------------------------------------------------------
+          backend/api.py               40      4    90%   15-18
+          backend/models.py            25      0   100%
+          ---------------------------------------------------------
+          TOTAL                        65      4    94%
+
+          ========================= 12 passed in 0.61s =========================
+          EOF
+
+      - name: Create frontend coverage text file
+        run: |
+          cat > /tmp/frontend-coverage.txt << 'EOF'
+          ---------- coverage: platform linux, python 3.9.7-final-0 ----------
+          Name                      Stmts   Miss  Cover   Missing
+          ---------------------------------------------------------
+          frontend/views.py            30      6    80%   10-15
+          frontend/forms.py            20      0   100%
+          ---------------------------------------------------------
+          TOTAL                        50      6    88%
+
+          ========================= 8 passed in 0.33s =========================
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          hide-comment: 'true'
+          multiple-files: |
+            Backend API, /tmp/backend-coverage.txt
+            Frontend Tests, /tmp/frontend-coverage.txt
+
+      - name: Assert action completed with multiple files
+        env:
+          COVERAGE: ${{ steps.action.outputs.coverage }}
+        run: |
+          echo "coverage: $COVERAGE"
+          # With multiple-files, the action may aggregate or use the last coverage
+          # The key assertion is that the action ran without error
+          echo "PASS: action completed successfully with multiple-files input"

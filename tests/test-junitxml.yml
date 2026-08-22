@@ -1,0 +1,83 @@
+name: Test JUnit XML test statistics
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create pytest coverage text file
+        run: |
+          cat > /tmp/pytest-coverage.txt << 'EOF'
+          ---------- coverage: platform linux, python 3.9.7-final-0 ----------
+          Name                      Stmts   Miss  Cover   Missing
+          ---------------------------------------------------------
+          src/__init__.py               0      0   100%
+          src/calculator.py            20      3    85%   10-12
+          ---------------------------------------------------------
+          TOTAL                        20      3    85%
+
+          ========================= 8 passed, 2 skipped, 1 failed in 1.23s =========================
+          EOF
+
+      - name: Create JUnit XML file
+        run: |
+          cat > /tmp/junit.xml << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <testsuites>
+            <testsuite name="pytest" errors="0" failures="1" skipped="2" tests="8" time="1.234">
+              <testcase classname="tests.test_calculator" name="test_add" time="0.001"/>
+              <testcase classname="tests.test_calculator" name="test_subtract" time="0.001"/>
+              <testcase classname="tests.test_calculator" name="test_multiply" time="0.001"/>
+              <testcase classname="tests.test_calculator" name="test_divide" time="0.001"/>
+              <testcase classname="tests.test_calculator" name="test_edge_case_1" time="0.001"/>
+              <testcase classname="tests.test_calculator" name="test_edge_case_2" time="0.001"/>
+              <testcase classname="tests.test_calculator" name="test_edge_case_3" time="0.001"/>
+              <testcase classname="tests.test_calculator" name="test_edge_case_4" time="0.001"/>
+              <testcase classname="tests.test_calculator" name="test_skip_1" time="0.000">
+                <skipped message="not implemented"/>
+              </testcase>
+              <testcase classname="tests.test_calculator" name="test_skip_2" time="0.000">
+                <skipped message="not implemented"/>
+              </testcase>
+              <testcase classname="tests.test_calculator" name="test_fail_1" time="0.002">
+                <failure message="AssertionError: assert 1 == 2">AssertionError: assert 1 == 2</failure>
+              </testcase>
+            </testsuite>
+          </testsuites>
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          pytest-coverage-path: /tmp/pytest-coverage.txt
+          junitxml-path: /tmp/junit.xml
+          junitxml-title: 'Test Results'
+          hide-comment: 'true'
+
+      - name: Assert test statistics outputs
+        env:
+          TESTS: ${{ steps.action.outputs.tests }}
+          SKIPPED: ${{ steps.action.outputs.skipped }}
+          FAILURES: ${{ steps.action.outputs.failures }}
+          ERRORS: ${{ steps.action.outputs.errors }}
+          TIME: ${{ steps.action.outputs.time }}
+          SUMMARY: ${{ steps.action.outputs.summaryReport }}
+        run: |
+          echo "tests: $TESTS"
+          echo "skipped: $SKIPPED"
+          echo "failures: $FAILURES"
+          echo "errors: $ERRORS"
+          echo "time: $TIME"
+          echo "summaryReport length: ${#SUMMARY}"
+          if [ -z "$TESTS" ]; then
+            echo "FAIL: tests output is empty"
+            exit 1
+          fi
+          if [ -z "$TIME" ]; then
+            echo "FAIL: time output is empty"
+            exit 1
+          fi
+          echo "PASS: test statistics parsed successfully"

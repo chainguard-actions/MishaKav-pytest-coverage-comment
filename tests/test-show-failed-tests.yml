@@ -1,0 +1,77 @@
+name: Test show-failed-tests with JUnit XML
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create pytest coverage text file
+        run: |
+          cat > /tmp/pytest-coverage.txt << 'EOF'
+          ---------- coverage: platform linux, python 3.9.7-final-0 ----------
+          Name                      Stmts   Miss  Cover   Missing
+          ---------------------------------------------------------
+          src/calculator.py            20      5    75%   10-14
+          ---------------------------------------------------------
+          TOTAL                        20      5    75%
+
+          ========================= 3 passed, 2 failed in 0.89s =========================
+          EOF
+
+      - name: Create JUnit XML with failures
+        run: |
+          cat > /tmp/junit-failures.xml << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <testsuites>
+            <testsuite name="pytest" errors="0" failures="2" skipped="0" tests="5" time="0.890">
+              <testcase classname="tests.test_calc" name="test_add" time="0.010"/>
+              <testcase classname="tests.test_calc" name="test_subtract" time="0.010"/>
+              <testcase classname="tests.test_calc" name="test_multiply" time="0.010"/>
+              <testcase classname="tests.test_calc" name="test_divide_by_zero" time="0.020">
+                <failure message="ZeroDivisionError: division by zero">
+                  ZeroDivisionError: division by zero
+                  at src/calculator.py:12
+                </failure>
+              </testcase>
+              <testcase classname="tests.test_calc" name="test_negative_numbers" time="0.015">
+                <failure message="AssertionError: assert -5 == 5">
+                  AssertionError: assert -5 == 5
+                </failure>
+              </testcase>
+            </testsuite>
+          </testsuites>
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          pytest-coverage-path: /tmp/pytest-coverage.txt
+          junitxml-path: /tmp/junit-failures.xml
+          junitxml-title: 'Calculator Tests'
+          show-failed-tests: 'true'
+          max-failed-tests: '10'
+          hide-comment: 'true'
+
+      - name: Assert failures and failedTestsHtml outputs
+        env:
+          FAILURES: ${{ steps.action.outputs.failures }}
+          TESTS: ${{ steps.action.outputs.tests }}
+          FAILED_HTML: ${{ steps.action.outputs.failedTestsHtml }}
+          NOT_SUCCESS: ${{ steps.action.outputs.notSuccessTestInfo }}
+        run: |
+          echo "failures: $FAILURES"
+          echo "tests: $TESTS"
+          echo "failedTestsHtml length: ${#FAILED_HTML}"
+          echo "notSuccessTestInfo: $NOT_SUCCESS"
+          if [ -z "$FAILURES" ]; then
+            echo "FAIL: failures output is empty"
+            exit 1
+          fi
+          if [ "$FAILURES" = "0" ]; then
+            echo "FAIL: expected non-zero failures, got 0"
+            exit 1
+          fi
+          echo "PASS: failures=$FAILURES tests=$TESTS"
