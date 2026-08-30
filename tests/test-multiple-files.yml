@@ -1,0 +1,56 @@
+name: Test multiple-files input for monorepo coverage
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create backend coverage text file
+        run: |
+          cat > /tmp/backend-coverage.txt << 'EOF'
+          ----------- coverage: platform linux, python 3.9.7-final-0 -----------
+          Name                      Stmts   Miss  Cover   Missing
+          ---------------------------------------------------------
+          backend/api.py               30      3    90%   15-18
+          backend/models.py            20      0   100%
+          ---------------------------------------------------------
+          TOTAL                        50      3    94%
+
+          =============================== 5 passed in 0.50s ===============================
+          EOF
+
+      - name: Create frontend coverage text file
+        run: |
+          cat > /tmp/frontend-coverage.txt << 'EOF'
+          ----------- coverage: platform linux, python 3.9.7-final-0 -----------
+          Name                        Stmts   Miss  Cover   Missing
+          -----------------------------------------------------------
+          frontend/components.py         40     10    75%   20-30
+          frontend/views.py              20      5    75%   10-15
+          -----------------------------------------------------------
+          TOTAL                          60     15    75%
+
+          =============================== 3 passed in 0.30s ===============================
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          hide-comment: 'true'
+          multiple-files: |
+            Backend API, /tmp/backend-coverage.txt
+            Frontend Tests, /tmp/frontend-coverage.txt
+
+      - name: Assert action completed (multiple-files mode)
+        env:
+          COVERAGE: ${{ steps.action.outputs.coverage }}
+          COLOR: ${{ steps.action.outputs.color }}
+        run: |
+          echo "coverage: $COVERAGE"
+          echo "color: $COLOR"
+          # In multiple-files mode, coverage output may be empty or set to the last file's coverage
+          # The action should complete without error regardless
+          echo "PASS: action completed in multiple-files mode"

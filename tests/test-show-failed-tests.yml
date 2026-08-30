@@ -1,0 +1,79 @@
+name: Test show-failed-tests with JUnit XML failures
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create pytest coverage text file
+        run: |
+          cat > /tmp/pytest-coverage.txt << 'EOF'
+          ----------- coverage: platform linux, python 3.9.7-final-0 -----------
+          Name                 Stmts   Miss  Cover   Missing
+          ----------------------------------------------------
+          src/main.py             50     15    70%   25-40
+          ----------------------------------------------------
+          TOTAL                   50     15    70%
+
+          =============================== 3 passed, 2 failed in 1.50s ===============================
+          EOF
+
+      - name: Create JUnit XML with failures
+        run: |
+          cat > /tmp/junit-failures.xml << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <testsuites>
+            <testsuite name="pytest" errors="0" failures="2" skipped="0" tests="5" time="1.500">
+              <testcase classname="tests.test_main" name="test_passing_one" time="0.100"/>
+              <testcase classname="tests.test_main" name="test_passing_two" time="0.200"/>
+              <testcase classname="tests.test_main" name="test_passing_three" time="0.150"/>
+              <testcase classname="tests.test_main" name="test_failing_one" time="0.500">
+                <failure message="AssertionError: assert 42 == 0">
+                  E   AssertionError: assert 42 == 0
+                  E   where 42 = compute_value()
+                </failure>
+              </testcase>
+              <testcase classname="tests.test_main" name="test_failing_two" time="0.550">
+                <failure message="AssertionError: assert 'foo' == 'bar'">
+                  E   AssertionError: assert 'foo' == 'bar'
+                </failure>
+              </testcase>
+            </testsuite>
+          </testsuites>
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          pytest-coverage-path: /tmp/pytest-coverage.txt
+          junitxml-path: /tmp/junit-failures.xml
+          show-failed-tests: 'true'
+          max-failed-tests: '10'
+          hide-comment: 'true'
+
+      - name: Assert failures output is set
+        env:
+          FAILURES: ${{ steps.action.outputs.failures }}
+          TESTS: ${{ steps.action.outputs.tests }}
+        run: |
+          echo "failures: $FAILURES"
+          echo "tests: $TESTS"
+          if [ -z "$FAILURES" ]; then
+            echo "FAIL: failures output is empty"
+            exit 1
+          fi
+          echo "PASS: failures=$FAILURES tests=$TESTS"
+
+      - name: Assert notSuccessTestInfo output is set
+        env:
+          NOT_SUCCESS: ${{ steps.action.outputs.notSuccessTestInfo }}
+        run: |
+          echo "notSuccessTestInfo: $NOT_SUCCESS"
+          if [ -z "$NOT_SUCCESS" ]; then
+            echo "FAIL: notSuccessTestInfo output is empty"
+            exit 1
+          fi
+          echo "PASS: notSuccessTestInfo is set"
