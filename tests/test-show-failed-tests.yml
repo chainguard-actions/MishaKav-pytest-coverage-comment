@@ -1,0 +1,76 @@
+name: Test show-failed-tests option
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create pytest coverage txt file
+        run: |
+          cat > /tmp/pytest-coverage.txt << 'EOF'
+          ---------- coverage: platform linux, python 3.9.7-final-0 ----------
+          Name                      Stmts   Miss  Cover   Missing
+          ---------------------------------------------------------
+          src/__init__.py               0      0   100%
+          src/calculator.py            20      5    75%   10-14
+          ---------------------------------------------------------
+          TOTAL                        20      5    75%
+
+          ========================= 3 passed, 2 failed in 1.50s ==========================
+          EOF
+
+      - name: Create JUnit XML with failures
+        run: |
+          cat > /tmp/junit-failures.xml << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <testsuites>
+            <testsuite name="pytest" errors="0" failures="2" skipped="0" tests="5" time="1.50">
+              <testcase classname="tests.test_calculator" name="test_add" time="0.10"/>
+              <testcase classname="tests.test_calculator" name="test_subtract" time="0.08"/>
+              <testcase classname="tests.test_calculator" name="test_multiply" time="0.09"/>
+              <testcase classname="tests.test_calculator" name="test_divide_fail" time="0.15">
+                <failure message="AssertionError: assert 2 == 3">
+                  AssertionError: assert 2 == 3
+                  at test_divide_fail (tests/test_calculator.py:42)
+                </failure>
+              </testcase>
+              <testcase classname="tests.test_calculator" name="test_negative_fail" time="0.12">
+                <failure message="AssertionError: assert -1 == 1">
+                  AssertionError: assert -1 == 1
+                  at test_negative_fail (tests/test_calculator.py:55)
+                </failure>
+              </testcase>
+            </testsuite>
+          </testsuites>
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          pytest-coverage-path: /tmp/pytest-coverage.txt
+          junitxml-path: /tmp/junit-failures.xml
+          show-failed-tests: 'true'
+          max-failed-tests: '10'
+          hide-comment: 'true'
+
+      - name: Assert coverage and failure outputs
+        env:
+          COVERAGE: ${{ steps.action.outputs.coverage }}
+          FAILURES: ${{ steps.action.outputs.failures }}
+          TESTS: ${{ steps.action.outputs.tests }}
+        run: |
+          echo "coverage: $COVERAGE"
+          echo "failures: $FAILURES"
+          echo "tests: $TESTS"
+          if [ -z "$COVERAGE" ]; then
+            echo "FAIL: coverage output is empty"
+            exit 1
+          fi
+          if [ -z "$FAILURES" ]; then
+            echo "FAIL: failures output is empty"
+            exit 1
+          fi
+          echo "PASS: coverage=$COVERAGE failures=$FAILURES tests=$TESTS"

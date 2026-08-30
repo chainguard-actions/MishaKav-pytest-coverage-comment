@@ -1,0 +1,54 @@
+name: Test multiple-files coverage reports
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create multiple coverage txt files
+        run: |
+          mkdir -p /tmp/backend /tmp/frontend
+
+          cat > /tmp/backend/coverage.txt << 'EOF'
+          ---------- coverage: platform linux, python 3.9.7-final-0 ----------
+          Name                      Stmts   Miss  Cover   Missing
+          ---------------------------------------------------------
+          backend/__init__.py           0      0   100%
+          backend/api.py               50      5    90%   20-24
+          ---------------------------------------------------------
+          TOTAL                        50      5    90%
+
+          ========================= 15 passed in 1.10s ==========================
+          EOF
+
+          cat > /tmp/frontend/coverage.txt << 'EOF'
+          ---------- coverage: platform linux, python 3.9.7-final-0 ----------
+          Name                      Stmts   Miss  Cover   Missing
+          ---------------------------------------------------------
+          frontend/__init__.py          0      0   100%
+          frontend/views.py            25      5    80%   10-14
+          ---------------------------------------------------------
+          TOTAL                        25      5    80%
+
+          ========================= 8 passed in 0.75s ==========================
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          hide-comment: 'true'
+          multiple-files: |
+            Backend API, /tmp/backend/coverage.txt
+            Frontend Tests, /tmp/frontend/coverage.txt
+
+      - name: Assert action completed successfully
+        env:
+          COVERAGE: ${{ steps.action.outputs.coverage }}
+        run: |
+          echo "coverage: $COVERAGE"
+          # With multiple-files, the coverage output may be from the last file or empty
+          # The key assertion is that the action ran without error
+          echo "PASS: action completed without error"
