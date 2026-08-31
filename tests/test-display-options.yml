@@ -1,0 +1,48 @@
+name: Test display options (hide-badge, hide-report, custom title)
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Copy fixture coverage file to workspace
+        run: |
+          cp "$GITHUB_WORKSPACE/tests/fixtures/pytest-coverage.txt" "$GITHUB_WORKSPACE/pytest-coverage.txt"
+
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          pytest-coverage-path: ./pytest-coverage.txt
+          hide-comment: 'true'
+          hide-badge: 'true'
+          hide-report: 'true'
+          hide-emoji: 'true'
+          title: 'My Custom Coverage Report'
+          badge-title: 'My Coverage'
+          default-branch: main
+
+      - name: Assert coverage output is still produced with display options
+        env:
+          COVERAGE: ${{ steps.action.outputs.coverage }}
+        run: |
+          echo "coverage: $COVERAGE"
+          if [ -z "$COVERAGE" ]; then
+            echo "FAIL: coverage output is empty even with display options set"
+            exit 1
+          fi
+          echo "PASS: coverage output is '$COVERAGE'"
+
+      - name: Assert color output is still produced with display options
+        env:
+          COLOR: ${{ steps.action.outputs.color }}
+        run: |
+          echo "color: $COLOR"
+          if [ -z "$COLOR" ]; then
+            echo "FAIL: color output is empty even with display options set"
+            exit 1
+          fi
+          echo "PASS: color output is '$COLOR'"

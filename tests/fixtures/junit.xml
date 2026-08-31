@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+    <testsuite name="pytest" errors="0" failures="1" skipped="1" tests="5" time="0.500" timestamp="2022-08-09T00:00:00.000000" hostname="runner">
+        <testcase classname="tests.test_main" name="test_success_1" time="0.100"/>
+        <testcase classname="tests.test_main" name="test_success_2" time="0.100"/>
+        <testcase classname="tests.test_main" name="test_success_3" time="0.100"/>
+        <testcase classname="tests.test_main" name="test_skipped" time="0.050">
+            <skipped type="pytest.skip" message="Skipping this test"/>
+        </testcase>
+        <testcase classname="tests.test_main" name="test_failed" time="0.150">
+            <failure message="AssertionError: assert 1 == 2">AssertionError: assert 1 == 2</failure>
+        </testcase>
+    </testsuite>
+</testsuites>
