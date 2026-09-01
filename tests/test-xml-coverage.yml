@@ -1,0 +1,66 @@
+name: Test XML coverage parsing
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up GITHUB_STEP_SUMMARY
+        run: |
+          SUMMARY_FILE="$RUNNER_TEMP/step_summary.md"
+          touch "$SUMMARY_FILE"
+          echo "GITHUB_STEP_SUMMARY=$SUMMARY_FILE" >> "$GITHUB_ENV"
+
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          pytest-xml-coverage-path: tests/fixtures/coverage.xml
+          hide-comment: 'true'
+
+      - name: Assert coverage output is set
+        env:
+          COVERAGE: ${{ steps.action.outputs.coverage }}
+        run: |
+          echo "coverage: $COVERAGE"
+          if [ -z "$COVERAGE" ]; then
+            echo "FAIL: coverage output is empty"
+            exit 1
+          fi
+          echo "PASS: coverage output is '$COVERAGE'"
+
+      - name: Assert color output is set
+        env:
+          COLOR: ${{ steps.action.outputs.color }}
+        run: |
+          echo "color: $COLOR"
+          if [ -z "$COLOR" ]; then
+            echo "FAIL: color output is empty"
+            exit 1
+          fi
+          echo "PASS: color output is '$COLOR'"
+
+      - name: Assert coverage is 83% (combined statement+branch coverage)
+        env:
+          COVERAGE: ${{ steps.action.outputs.coverage }}
+        run: |
+          echo "coverage: $COVERAGE"
+          if [ "$COVERAGE" != "83%" ]; then
+            echo "FAIL: expected coverage to be '83%', got '$COVERAGE'"
+            exit 1
+          fi
+          echo "PASS: coverage is 83%"
+
+      - name: Assert color is green for 83% coverage
+        env:
+          COLOR: ${{ steps.action.outputs.color }}
+        run: |
+          echo "color: $COLOR"
+          if [ "$COLOR" != "green" ]; then
+            echo "FAIL: expected color to be 'green' for 83% coverage, got '$COLOR'"
+            exit 1
+          fi
+          echo "PASS: color is green"
