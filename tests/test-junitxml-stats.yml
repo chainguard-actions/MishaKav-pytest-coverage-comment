@@ -1,0 +1,105 @@
+name: Test JUnit XML statistics parsing
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create pytest coverage txt file
+        run: |
+          cat > /tmp/pytest-coverage.txt << 'EOF'
+          ---------- coverage: platform linux, python 3.9.7-final-0 ----------
+          Name                 Stmts   Miss  Cover   Missing
+          ----------------------------------------------------
+          src/__init__.py          0      0   100%
+          src/app.py              30      3    90%   20-22
+          ----------------------------------------------------
+          TOTAL                   30      3    90%
+
+          ========================= 8 passed, 2 skipped in 1.23s =========================
+          EOF
+
+      - name: Create JUnit XML file
+        run: |
+          cat > /tmp/junit.xml << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <testsuites>
+            <testsuite name="pytest" errors="0" failures="1" skipped="2" tests="10" time="1.234">
+              <testcase classname="tests.test_app" name="test_add" time="0.100"/>
+              <testcase classname="tests.test_app" name="test_subtract" time="0.100"/>
+              <testcase classname="tests.test_app" name="test_multiply" time="0.100"/>
+              <testcase classname="tests.test_app" name="test_divide" time="0.100"/>
+              <testcase classname="tests.test_app" name="test_edge_case_1" time="0.100"/>
+              <testcase classname="tests.test_app" name="test_edge_case_2" time="0.100"/>
+              <testcase classname="tests.test_app" name="test_edge_case_3" time="0.100"/>
+              <testcase classname="tests.test_app" name="test_skip_1" time="0.000">
+                <skipped message="not implemented yet"/>
+              </testcase>
+              <testcase classname="tests.test_app" name="test_skip_2" time="0.000">
+                <skipped message="not implemented yet"/>
+              </testcase>
+              <testcase classname="tests.test_app" name="test_failing" time="0.100">
+                <failure message="AssertionError: expected 4 but got 5">AssertionError: expected 4 but got 5</failure>
+              </testcase>
+            </testsuite>
+          </testsuites>
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          pytest-coverage-path: /tmp/pytest-coverage.txt
+          junitxml-path: /tmp/junit.xml
+          junitxml-title: 'Test Results'
+          hide-comment: 'true'
+
+      - name: Assert coverage output is set
+        env:
+          COVERAGE: ${{ steps.action.outputs.coverage }}
+        run: |
+          echo "coverage: $COVERAGE"
+          if [ -z "$COVERAGE" ]; then
+            echo "FAIL: coverage output is empty"
+            exit 1
+          fi
+          echo "PASS: coverage=$COVERAGE"
+
+      - name: Assert test statistics outputs
+        env:
+          TESTS: ${{ steps.action.outputs.tests }}
+          SKIPPED: ${{ steps.action.outputs.skipped }}
+          FAILURES: ${{ steps.action.outputs.failures }}
+          ERRORS: ${{ steps.action.outputs.errors }}
+          TIME: ${{ steps.action.outputs.time }}
+        run: |
+          echo "tests: $TESTS"
+          echo "skipped: $SKIPPED"
+          echo "failures: $FAILURES"
+          echo "errors: $ERRORS"
+          echo "time: $TIME"
+          if [ -z "$TESTS" ]; then
+            echo "FAIL: tests output is empty"
+            exit 1
+          fi
+          if [ -z "$SKIPPED" ]; then
+            echo "FAIL: skipped output is empty"
+            exit 1
+          fi
+          if [ -z "$FAILURES" ]; then
+            echo "FAIL: failures output is empty"
+            exit 1
+          fi
+          echo "PASS: test statistics are populated"
+
+      - name: Assert summaryReport output is set
+        env:
+          SUMMARY: ${{ steps.action.outputs.summaryReport }}
+        run: |
+          echo "summaryReport length: ${#SUMMARY}"
+          if [ -z "$SUMMARY" ]; then
+            echo "FAIL: summaryReport output is empty"
+            exit 1
+          fi
+          echo "PASS: summaryReport is populated"

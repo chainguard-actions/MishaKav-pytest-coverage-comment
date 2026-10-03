@@ -1,0 +1,55 @@
+name: Test multiple-files input for monorepo coverage
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create backend coverage txt file
+        run: |
+          cat > /tmp/backend-coverage.txt << 'EOF'
+          ---------- coverage: platform linux, python 3.9.7-final-0 ----------
+          Name                      Stmts   Miss  Cover   Missing
+          ---------------------------------------------------------
+          backend/api.py               30      3    90%   15-17
+          backend/models.py            20      0   100%
+          ---------------------------------------------------------
+          TOTAL                        50      3    94%
+
+          ========================= 10 passed in 0.60s =========================
+          EOF
+
+      - name: Create frontend coverage txt file
+        run: |
+          cat > /tmp/frontend-coverage.txt << 'EOF'
+          ---------- coverage: platform linux, python 3.9.7-final-0 ----------
+          Name                       Stmts   Miss  Cover   Missing
+          ----------------------------------------------------------
+          frontend/components.py        25      5    80%   10-14
+          frontend/views.py             15      0   100%
+          ----------------------------------------------------------
+          TOTAL                         40      5    88%
+
+          ========================= 8 passed in 0.45s =========================
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          hide-comment: 'true'
+          multiple-files: |
+            Backend API, /tmp/backend-coverage.txt
+            Frontend Tests, /tmp/frontend-coverage.txt
+
+      - name: Assert coverageHtml output is set for multiple files
+        env:
+          COVERAGE_HTML: ${{ steps.action.outputs.coverageHtml }}
+        run: |
+          echo "coverageHtml length: ${#COVERAGE_HTML}"
+          if [ -z "$COVERAGE_HTML" ]; then
+            echo "FAIL: coverageHtml output is empty for multiple-files scenario"
+            exit 1
+          fi
+          echo "PASS: coverageHtml is populated for multiple-files"

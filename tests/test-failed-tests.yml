@@ -1,0 +1,84 @@
+name: Test show-failed-tests output
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create pytest coverage txt file
+        run: |
+          cat > /tmp/pytest-coverage.txt << 'EOF'
+          ---------- coverage: platform linux, python 3.9.7-final-0 ----------
+          Name                 Stmts   Miss  Cover   Missing
+          ----------------------------------------------------
+          src/service.py          40      8    80%   15-22
+          ----------------------------------------------------
+          TOTAL                   40      8    80%
+
+          ========================= 3 passed, 2 failed in 0.55s =========================
+          EOF
+
+      - name: Create JUnit XML with failures
+        run: |
+          cat > /tmp/junit-failures.xml << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <testsuites>
+            <testsuite name="pytest" errors="0" failures="2" skipped="0" tests="5" time="0.550">
+              <testcase classname="tests.test_service" name="test_create" time="0.100"/>
+              <testcase classname="tests.test_service" name="test_read" time="0.100"/>
+              <testcase classname="tests.test_service" name="test_update" time="0.100"/>
+              <testcase classname="tests.test_service" name="test_delete_fails" time="0.100">
+                <failure message="AssertionError: delete returned 500">
+                  AssertionError: delete returned 500
+                  at tests/test_service.py:45
+                </failure>
+              </testcase>
+              <testcase classname="tests.test_service" name="test_auth_fails" time="0.100">
+                <failure message="AssertionError: auth token invalid">
+                  AssertionError: auth token invalid
+                  at tests/test_service.py:67
+                </failure>
+              </testcase>
+            </testsuite>
+          </testsuites>
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          pytest-coverage-path: /tmp/pytest-coverage.txt
+          junitxml-path: /tmp/junit-failures.xml
+          junitxml-title: 'Service Tests'
+          show-failed-tests: 'true'
+          max-failed-tests: '10'
+          hide-comment: 'true'
+
+      - name: Assert failures output is set
+        env:
+          FAILURES: ${{ steps.action.outputs.failures }}
+          TESTS: ${{ steps.action.outputs.tests }}
+        run: |
+          echo "failures: $FAILURES"
+          echo "tests: $TESTS"
+          if [ -z "$FAILURES" ]; then
+            echo "FAIL: failures output is empty"
+            exit 1
+          fi
+          if [ "$FAILURES" = "0" ]; then
+            echo "FAIL: expected non-zero failures, got 0"
+            exit 1
+          fi
+          echo "PASS: failures=$FAILURES tests=$TESTS"
+
+      - name: Assert notSuccessTestInfo output is set
+        env:
+          NOT_SUCCESS: ${{ steps.action.outputs.notSuccessTestInfo }}
+        run: |
+          echo "notSuccessTestInfo: $NOT_SUCCESS"
+          if [ -z "$NOT_SUCCESS" ]; then
+            echo "FAIL: notSuccessTestInfo output is empty"
+            exit 1
+          fi
+          echo "PASS: notSuccessTestInfo is populated"

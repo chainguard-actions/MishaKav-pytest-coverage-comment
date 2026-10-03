@@ -1,0 +1,51 @@
+name: Test display options (hide-badge, hide-report, hide-emoji)
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create pytest coverage txt file
+        run: |
+          cat > /tmp/pytest-coverage.txt << 'EOF'
+          ---------- coverage: platform linux, python 3.9.7-final-0 ----------
+          Name                 Stmts   Miss  Cover   Missing
+          ----------------------------------------------------
+          src/__init__.py          0      0   100%
+          src/main.py             50     10    80%   30-39
+          src/helpers.py          20      0   100%
+          ----------------------------------------------------
+          TOTAL                   70     10    86%
+
+          ========================= 12 passed in 0.88s =========================
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          pytest-coverage-path: /tmp/pytest-coverage.txt
+          hide-comment: 'true'
+          hide-badge: 'true'
+          hide-report: 'true'
+          hide-emoji: 'true'
+          title: 'Hidden Badge and Report'
+          badge-title: 'Cov'
+
+      - name: Assert coverage output is still set when badge/report hidden
+        env:
+          COVERAGE: ${{ steps.action.outputs.coverage }}
+          COLOR: ${{ steps.action.outputs.color }}
+        run: |
+          echo "coverage: $COVERAGE"
+          echo "color: $COLOR"
+          if [ -z "$COVERAGE" ]; then
+            echo "FAIL: coverage output is empty even with hide-badge/hide-report"
+            exit 1
+          fi
+          if [ -z "$COLOR" ]; then
+            echo "FAIL: color output is empty"
+            exit 1
+          fi
+          echo "PASS: coverage=$COVERAGE color=$COLOR"
