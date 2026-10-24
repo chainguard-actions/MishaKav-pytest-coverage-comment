@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+  <testsuite name="pytest" errors="0" failures="1" skipped="1" tests="4" time="1.5" timestamp="2024-01-01T00:00:00" hostname="runner">
+    <testcase classname="tests.test_app" name="test_add" time="0.001"/>
+    <testcase classname="tests.test_app" name="test_skip_me" time="0.000">
+      <skipped type="pytest.skip" message="not ready">tests/test_app.py:10: not ready</skipped>
+    </testcase>
+    <testcase classname="tests.test_app" name="test_sub" time="0.002"/>
+    <testcase classname="tests.test_app" name="test_divide_broken" time="0.003">
+      <failure message="assert 2 == 3">def test_divide_broken():
+&gt;       assert 2 == 3
+E       assert 2 == 3
+
+tests/test_app.py:20: AssertionError</failure>
+    </testcase>
+  </testsuite>
+</testsuites>

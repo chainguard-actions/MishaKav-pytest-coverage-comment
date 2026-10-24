@@ -1,0 +1,25 @@
+name: Test missing coverage file
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          pytest-coverage-path: tests/fixtures/does-not-exist.txt
+      - name: Assert fallback outputs
+        env:
+          COVERAGE: ${{ steps.action.outputs.coverage }}
+          COLOR: ${{ steps.action.outputs.color }}
+          HTML: ${{ steps.action.outputs.coverageHtml }}
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome=$OUTCOME coverage=$COVERAGE color=$COLOR html=$HTML"
+          [ "$OUTCOME" = "success" ] || { echo "FAIL: action should not fail on missing file"; exit 1; }
+          [ "$COVERAGE" = "0" ] || { echo "FAIL: coverage expected '0'"; exit 1; }
+          [ "$COLOR" = "red" ] || { echo "FAIL: color expected 'red'"; exit 1; }
+          [ -z "$HTML" ] || { echo "FAIL: coverageHtml expected empty"; exit 1; }
+          echo "PASS"

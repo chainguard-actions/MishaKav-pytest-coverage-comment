@@ -1,0 +1,64 @@
+name: Test basic TXT coverage report
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          pytest-coverage-path: tests/fixtures/pytest-coverage.txt
+      - name: Assert coverage output
+        env:
+          ACTUAL: ${{ steps.action.outputs.coverage }}
+        run: |
+          echo "actual: $ACTUAL"
+          if [ "$ACTUAL" != "83%" ]; then
+            echo "FAIL: expected '83%'"
+            exit 1
+          fi
+          echo "PASS"
+      - name: Assert color output
+        env:
+          ACTUAL: ${{ steps.action.outputs.color }}
+        run: |
+          echo "actual: $ACTUAL"
+          if [ "$ACTUAL" != "green" ]; then
+            echo "FAIL: expected 'green'"
+            exit 1
+          fi
+          echo "PASS"
+      - name: Assert warnings output
+        env:
+          ACTUAL: ${{ steps.action.outputs.warnings }}
+        run: |
+          echo "actual: $ACTUAL"
+          if [ "$ACTUAL" != "0" ]; then
+            echo "FAIL: expected '0'"
+            exit 1
+          fi
+          echo "PASS"
+      - name: Assert coverageHtml and summaryReport
+        env:
+          HTML: ${{ steps.action.outputs.coverageHtml }}
+          SUMMARY: ${{ steps.action.outputs.summaryReport }}
+        run: |
+          echo "coverageHtml: $HTML"
+          echo "summaryReport: $SUMMARY"
+          for needle in "Coverage Report" "img.shields.io/badge/Coverage-83%25-green" "app.py" "<table>"; do
+            if ! printf '%s' "$HTML" | grep -qF "$needle"; then
+              echo "FAIL: coverageHtml missing '$needle'"
+              exit 1
+            fi
+          done
+          if ! printf '%s' "$HTML" | grep -qF "/blob/main/"; then
+            echo "FAIL: coverageHtml should link to default branch 'main'"
+            exit 1
+          fi
+          if ! printf '%s' "$SUMMARY" | grep -qF "Coverage Report"; then
+            echo "FAIL: summaryReport missing title"
+            exit 1
+          fi
+          echo "PASS"

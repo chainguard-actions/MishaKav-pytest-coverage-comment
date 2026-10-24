@@ -1,0 +1,31 @@
+name: Test multiple-files report
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          pytest-coverage-path: tests/fixtures/pytest-coverage.txt
+          hide-comment: 'true'
+          multiple-files: |
+            Backend API, tests/fixtures/pytest-coverage.txt, tests/fixtures/junit.xml
+            Frontend Lib, tests/fixtures/coverage.xml
+      - name: Assert multiple-files summary
+        env:
+          SUMMARY: ${{ steps.action.outputs.summaryReport }}
+          TESTS: ${{ steps.action.outputs.tests }}
+        run: |
+          echo "summaryReport: $SUMMARY"
+          echo "tests: $TESTS"
+          for needle in "Backend API" "Frontend Lib" "| Title | Coverage | Tests |" "Coverage-83%25-green" "Coverage-60%25-yellow"; do
+            if ! printf '%s' "$SUMMARY" | grep -qF -- "$needle"; then
+              echo "FAIL: summaryReport missing '$needle'"
+              exit 1
+            fi
+          done
+          [ "$TESTS" = "4" ] || { echo "FAIL: tests expected 4 from first junit file"; exit 1; }
+          echo "PASS"

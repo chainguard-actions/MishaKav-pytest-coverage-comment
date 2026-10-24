@@ -1,0 +1,45 @@
+name: Test XML coverage report
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          pytest-xml-coverage-path: tests/fixtures/coverage.xml
+          hide-comment: 'true'
+      - name: Assert coverage output
+        env:
+          ACTUAL: ${{ steps.action.outputs.coverage }}
+        run: |
+          echo "actual: $ACTUAL"
+          if [ "$ACTUAL" != "60%" ]; then
+            echo "FAIL: expected '60%'"
+            exit 1
+          fi
+          echo "PASS"
+      - name: Assert color output
+        env:
+          ACTUAL: ${{ steps.action.outputs.color }}
+        run: |
+          echo "actual: $ACTUAL"
+          if [ "$ACTUAL" != "yellow" ]; then
+            echo "FAIL: expected 'yellow'"
+            exit 1
+          fi
+          echo "PASS"
+      - name: Assert coverageHtml contains badge and files
+        env:
+          HTML: ${{ steps.action.outputs.coverageHtml }}
+        run: |
+          echo "coverageHtml: $HTML"
+          for needle in "Coverage-60%25-yellow" "utils.py" "Coverage Report"; do
+            if ! printf '%s' "$HTML" | grep -qF "$needle"; then
+              echo "FAIL: coverageHtml missing '$needle'"
+              exit 1
+            fi
+          done
+          echo "PASS"

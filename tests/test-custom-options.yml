@@ -1,0 +1,46 @@
+name: Test custom title, text badge and removed links
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          pytest-coverage-path: tests/fixtures/pytest-coverage.txt
+          title: My Custom Title
+          text-instead-badge: 'true'
+          remove-links-to-files: 'true'
+          remove-links-to-lines: 'true'
+          default-branch: develop
+          hide-comment: 'true'
+      - name: Assert customized report
+        env:
+          HTML: ${{ steps.action.outputs.coverageHtml }}
+          SUMMARY: ${{ steps.action.outputs.summaryReport }}
+          COVERAGE: ${{ steps.action.outputs.coverage }}
+        run: |
+          echo "coverageHtml: $HTML"
+          echo "summaryReport: $SUMMARY"
+          [ "$COVERAGE" = "83%" ] || { echo "FAIL: coverage expected 83%"; exit 1; }
+          for needle in "My Custom Title" "83% (25/30)"; do
+            if ! printf '%s' "$HTML" | grep -qF "$needle"; then
+              echo "FAIL: coverageHtml missing '$needle'"
+              exit 1
+            fi
+          done
+          if printf '%s' "$HTML" | grep -qF "img.shields.io"; then
+            echo "FAIL: badge image should be replaced by text"
+            exit 1
+          fi
+          if printf '%s' "$HTML" | grep -qF "<a href"; then
+            echo "FAIL: links should be removed"
+            exit 1
+          fi
+          if ! printf '%s' "$SUMMARY" | grep -qF "My Custom Title"; then
+            echo "FAIL: summaryReport missing custom title"
+            exit 1
+          fi
+          echo "PASS"
