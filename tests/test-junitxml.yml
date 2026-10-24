@@ -1,0 +1,40 @@
+name: Test JUnit XML statistics
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          pytest-coverage-path: tests/fixtures/pytest-coverage.txt
+          junitxml-path: tests/fixtures/junit.xml
+          junitxml-title: My Test Summary
+          hide-comment: 'true'
+      - name: Assert junit outputs
+        env:
+          TESTS: ${{ steps.action.outputs.tests }}
+          SKIPPED: ${{ steps.action.outputs.skipped }}
+          FAILURES: ${{ steps.action.outputs.failures }}
+          ERRORS: ${{ steps.action.outputs.errors }}
+          TIME: ${{ steps.action.outputs.time }}
+          INFO: ${{ steps.action.outputs.notSuccessTestInfo }}
+          SUMMARY: ${{ steps.action.outputs.summaryReport }}
+          FAILED_HTML: ${{ steps.action.outputs.failedTestsHtml }}
+        run: |
+          echo "tests=$TESTS skipped=$SKIPPED failures=$FAILURES errors=$ERRORS time=$TIME"
+          echo "notSuccessTestInfo: $INFO"
+          echo "summaryReport: $SUMMARY"
+          [ "$TESTS" = "5" ] || { echo "FAIL: tests"; exit 1; }
+          [ "$SKIPPED" = "1" ] || { echo "FAIL: skipped"; exit 1; }
+          [ "$FAILURES" = "1" ] || { echo "FAIL: failures"; exit 1; }
+          [ "$ERRORS" = "0" ] || { echo "FAIL: errors"; exit 1; }
+          [ "$TIME" = "1.5" ] || { echo "FAIL: time"; exit 1; }
+          printf '%s' "$INFO" | grep -qF '"count":2' || { echo "FAIL: count"; exit 1; }
+          printf '%s' "$INFO" | grep -qF 'test_broken_math' || { echo "FAIL: failure name"; exit 1; }
+          printf '%s' "$INFO" | grep -qF 'test_skipped_case' || { echo "FAIL: skipped name"; exit 1; }
+          printf '%s' "$SUMMARY" | grep -qF 'My Test Summary' || { echo "FAIL: junit title"; exit 1; }
+          [ -z "$FAILED_HTML" ] || { echo "FAIL: failedTestsHtml should be empty when show-failed-tests is off"; exit 1; }
+          echo "PASS"

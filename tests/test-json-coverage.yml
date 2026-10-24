@@ -1,0 +1,26 @@
+name: Test JSON coverage report
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          pytest-json-coverage-path: tests/fixtures/coverage.json
+          hide-comment: 'true'
+      - name: Assert outputs
+        env:
+          COVERAGE: ${{ steps.action.outputs.coverage }}
+          COLOR: ${{ steps.action.outputs.color }}
+          HTML: ${{ steps.action.outputs.coverageHtml }}
+        run: |
+          echo "coverage: $COVERAGE color: $COLOR"
+          echo "coverageHtml: $HTML"
+          [ "$COVERAGE" = "88%" ] || { echo "FAIL: expected coverage 88%"; exit 1; }
+          [ "$COLOR" = "green" ] || { echo "FAIL: expected green"; exit 1; }
+          printf '%s' "$HTML" | grep -qF "foo.py" || { echo "FAIL: missing foo.py"; exit 1; }
+          printf '%s' "$HTML" | grep -qF "bar.py" || { echo "FAIL: missing bar.py"; exit 1; }
+          echo "PASS"

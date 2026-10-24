@@ -1,0 +1,29 @@
+name: Test removing all links from the report
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          pytest-coverage-path: tests/fixtures/pytest-coverage.txt
+          remove-link-from-badge: 'true'
+          remove-links-to-files: 'true'
+          remove-links-to-lines: 'true'
+          hide-comment: 'true'
+      - name: Assert no hyperlinks
+        env:
+          HTML: ${{ steps.action.outputs.coverageHtml }}
+        run: |
+          echo "coverageHtml: $HTML"
+          printf '%s' "$HTML" | grep -qF "core.py" || { echo "FAIL: missing core.py"; exit 1; }
+          printf '%s' "$HTML" | grep -qF "10&ndash;14" || { echo "FAIL: missing line range"; exit 1; }
+          printf '%s' "$HTML" | grep -qF "<img" || { echo "FAIL: missing badge image"; exit 1; }
+          if printf '%s' "$HTML" | grep -qF "<a "; then
+            echo "FAIL: found a hyperlink"
+            exit 1
+          fi
+          echo "PASS"

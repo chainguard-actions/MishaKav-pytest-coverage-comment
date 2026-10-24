@@ -1,0 +1,34 @@
+name: Test multiple-files report
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          pytest-coverage-path: tests/fixtures/not-used.txt
+          hide-comment: 'true'
+          multiple-files: |
+            Backend API, tests/fixtures/pytest-coverage.txt, tests/fixtures/junit.xml
+            Frontend XML, tests/fixtures/coverage.xml
+            Worker JSON, tests/fixtures/coverage.json
+      - name: Assert multi report
+        env:
+          SUMMARY: ${{ steps.action.outputs.summaryReport }}
+          TESTS: ${{ steps.action.outputs.tests }}
+          HTML: ${{ steps.action.outputs.coverageHtml }}
+        run: |
+          echo "summaryReport: $SUMMARY"
+          echo "tests: $TESTS"
+          for s in "Backend API" "Frontend XML" "Worker JSON" "| Title | Coverage | Tests |" "77%25" "90%25" "88%25"; do
+            if ! printf '%s' "$SUMMARY" | grep -qF -- "$s"; then
+              echo "FAIL: summaryReport missing '$s'"
+              exit 1
+            fi
+          done
+          [ "$TESTS" = "5" ] || { echo "FAIL: expected tests=5 from first line junit"; exit 1; }
+          printf '%s' "$HTML" | grep -qF "77%25" || { echo "FAIL: coverageHtml should be first report badge"; exit 1; }
+          echo "PASS"

@@ -1,0 +1,26 @@
+name: Test XML coverage report
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          pytest-xml-coverage-path: tests/fixtures/coverage.xml
+          hide-comment: 'true'
+      - name: Assert outputs
+        env:
+          COVERAGE: ${{ steps.action.outputs.coverage }}
+          COLOR: ${{ steps.action.outputs.color }}
+          HTML: ${{ steps.action.outputs.coverageHtml }}
+        run: |
+          echo "coverage: $COVERAGE color: $COLOR"
+          echo "coverageHtml: $HTML"
+          [ "$COVERAGE" = "90%" ] || { echo "FAIL: expected coverage 90%"; exit 1; }
+          [ "$COLOR" = "brightgreen" ] || { echo "FAIL: expected brightgreen"; exit 1; }
+          printf '%s' "$HTML" | grep -qF "partialcov.py" || { echo "FAIL: missing partialcov.py"; exit 1; }
+          printf '%s' "$HTML" | grep -qF "fullcov.py" || { echo "FAIL: missing fullcov.py"; exit 1; }
+          echo "PASS"

@@ -1,0 +1,28 @@
+name: Test show-failed-tests
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          pytest-coverage-path: tests/fixtures/pytest-coverage.txt
+          junitxml-path: tests/fixtures/junit.xml
+          show-failed-tests: 'true'
+          hide-comment: 'true'
+      - name: Assert failed tests block
+        env:
+          FAILED_HTML: ${{ steps.action.outputs.failedTestsHtml }}
+          SUMMARY: ${{ steps.action.outputs.summaryReport }}
+        run: |
+          echo "failedTestsHtml: $FAILED_HTML"
+          [ -n "$FAILED_HTML" ] || { echo "FAIL: failedTestsHtml empty"; exit 1; }
+          printf '%s' "$FAILED_HTML" | grep -qF 'test_broken_math' || { echo "FAIL: missing failed test name"; exit 1; }
+          if printf '%s' "$FAILED_HTML" | grep -qF 'test_one'; then
+            echo "FAIL: passing test should not be listed"; exit 1
+          fi
+          printf '%s' "$SUMMARY" | grep -qF 'test_broken_math' || { echo "FAIL: summaryReport missing failed test"; exit 1; }
+          echo "PASS"

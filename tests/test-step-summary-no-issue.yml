@@ -1,0 +1,26 @@
+name: Test workflow_dispatch step summary without issue number
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          pytest-coverage-path: tests/fixtures/pytest-coverage.txt
+          junitxml-path: tests/fixtures/junit.xml
+      - name: Assert action succeeded and produced report
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          COVERAGE: ${{ steps.action.outputs.coverage }}
+          SUMMARY: ${{ steps.action.outputs.summaryReport }}
+        run: |
+          echo "outcome: $OUTCOME coverage: $COVERAGE"
+          echo "summaryReport: $SUMMARY"
+          [ "$OUTCOME" = "success" ] || { echo "FAIL: expected success"; exit 1; }
+          [ "$COVERAGE" = "77%" ] || { echo "FAIL: expected coverage 77%"; exit 1; }
+          printf '%s' "$SUMMARY" | grep -qF "Coverage Report" || { echo "FAIL: summary missing title"; exit 1; }
+          printf '%s' "$SUMMARY" | grep -qF "Tests" || { echo "FAIL: summary missing junit table"; exit 1; }
+          echo "PASS"

@@ -1,0 +1,29 @@
+name: Test custom title, badge title and default branch
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          pytest-coverage-path: tests/fixtures/pytest-coverage.txt
+          title: My Monorepo Report
+          badge-title: Cov
+          default-branch: develop
+          coverage-path-prefix: backend/
+          hide-comment: 'true'
+      - name: Assert custom values appear
+        env:
+          HTML: ${{ steps.action.outputs.coverageHtml }}
+        run: |
+          echo "coverageHtml: $HTML"
+          for s in "My Monorepo Report" "img.shields.io/badge/Cov-77%25-yellow" "/blob/develop/backend/src/app/core.py"; do
+            if ! printf '%s' "$HTML" | grep -qF -- "$s"; then
+              echo "FAIL: coverageHtml missing '$s'"
+              exit 1
+            fi
+          done
+          echo "PASS"

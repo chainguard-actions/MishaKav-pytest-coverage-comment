@@ -1,0 +1,28 @@
+name: Test XML coverage with xml-skip-covered
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          pytest-xml-coverage-path: tests/fixtures/coverage.xml
+          xml-skip-covered: 'true'
+          hide-comment: 'true'
+      - name: Assert fully covered file is hidden
+        env:
+          COVERAGE: ${{ steps.action.outputs.coverage }}
+          HTML: ${{ steps.action.outputs.coverageHtml }}
+        run: |
+          echo "coverage: $COVERAGE"
+          echo "coverageHtml: $HTML"
+          [ "$COVERAGE" = "90%" ] || { echo "FAIL: expected coverage 90%"; exit 1; }
+          printf '%s' "$HTML" | grep -qF "partialcov.py" || { echo "FAIL: missing partialcov.py"; exit 1; }
+          if printf '%s' "$HTML" | grep -qF "fullcov.py"; then
+            echo "FAIL: fullcov.py should be skipped"
+            exit 1
+          fi
+          echo "PASS"

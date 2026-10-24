@@ -1,0 +1,46 @@
+name: Test text coverage report
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          pytest-coverage-path: tests/fixtures/pytest-coverage.txt
+          hide-comment: 'true'
+      - name: Assert coverage outputs
+        env:
+          COVERAGE: ${{ steps.action.outputs.coverage }}
+          COLOR: ${{ steps.action.outputs.color }}
+          WARNINGS: ${{ steps.action.outputs.warnings }}
+        run: |
+          echo "coverage: $COVERAGE color: $COLOR warnings: $WARNINGS"
+          [ "$COVERAGE" = "77%" ] || { echo "FAIL: expected coverage 77%"; exit 1; }
+          [ "$COLOR" = "yellow" ] || { echo "FAIL: expected color yellow"; exit 1; }
+          [ "$WARNINGS" = "2" ] || { echo "FAIL: expected warnings 2"; exit 1; }
+          echo "PASS"
+      - name: Assert coverageHtml content
+        env:
+          HTML: ${{ steps.action.outputs.coverageHtml }}
+        run: |
+          echo "coverageHtml: $HTML"
+          for s in "Coverage Report" "core.py" "__init__.py" "<table>" "img.shields.io/badge/Coverage-77%25-yellow" "/blob/main/"; do
+            if ! printf '%s' "$HTML" | grep -qF -- "$s"; then
+              echo "FAIL: coverageHtml missing '$s'"
+              exit 1
+            fi
+          done
+          echo "PASS"
+      - name: Assert summaryReport non-empty
+        env:
+          SUMMARY: ${{ steps.action.outputs.summaryReport }}
+        run: |
+          echo "summaryReport: $SUMMARY"
+          if ! printf '%s' "$SUMMARY" | grep -qF "core.py"; then
+            echo "FAIL: summaryReport missing core.py"
+            exit 1
+          fi
+          echo "PASS"
