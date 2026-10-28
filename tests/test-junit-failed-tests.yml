@@ -1,0 +1,67 @@
+name: Test JUnit statistics and failed tests
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          pytest-coverage-path: tests/fixtures/pytest-coverage.txt
+          junitxml-path: tests/fixtures/junit.xml
+          junitxml-title: My Test Summary
+          show-failed-tests: 'true'
+          hide-comment: 'true'
+      - name: Assert junit counts
+        env:
+          TESTS: ${{ steps.action.outputs.tests }}
+          SKIPPED: ${{ steps.action.outputs.skipped }}
+          FAILURES: ${{ steps.action.outputs.failures }}
+          ERRORS: ${{ steps.action.outputs.errors }}
+          TIME: ${{ steps.action.outputs.time }}
+        run: |
+          echo "tests=$TESTS skipped=$SKIPPED failures=$FAILURES errors=$ERRORS time=$TIME"
+          [ "$TESTS" = "4" ] || { echo "FAIL: tests"; exit 1; }
+          [ "$SKIPPED" = "1" ] || { echo "FAIL: skipped"; exit 1; }
+          [ "$FAILURES" = "1" ] || { echo "FAIL: failures"; exit 1; }
+          [ "$ERRORS" = "0" ] || { echo "FAIL: errors"; exit 1; }
+          [ "$TIME" = "1.234" ] || { echo "FAIL: time"; exit 1; }
+          echo "PASS"
+      - name: Assert notSuccessTestInfo
+        env:
+          ACTUAL: ${{ steps.action.outputs.notSuccessTestInfo }}
+        run: |
+          echo "actual: $ACTUAL"
+          COUNT=$(printf '%s' "$ACTUAL" | jq -r '.count')
+          FAILED=$(printf '%s' "$ACTUAL" | jq -r '.failures[0].name')
+          SKIP=$(printf '%s' "$ACTUAL" | jq -r '.skipped[0].name')
+          [ "$COUNT" = "2" ] || { echo "FAIL: count=$COUNT"; exit 1; }
+          [ "$FAILED" = "test_mul" ] || { echo "FAIL: failed=$FAILED"; exit 1; }
+          [ "$SKIP" = "test_div" ] || { echo "FAIL: skipped=$SKIP"; exit 1; }
+          echo "PASS"
+      - name: Assert failedTestsHtml
+        env:
+          ACTUAL: ${{ steps.action.outputs.failedTestsHtml }}
+        run: |
+          echo "actual: $ACTUAL"
+          for needle in "Failed Tests" "test_mul" "assert 1 == 2"; do
+            if ! printf '%s' "$ACTUAL" | grep -qF "$needle"; then
+              echo "FAIL: failedTestsHtml missing '$needle'"
+              exit 1
+            fi
+          done
+          echo "PASS"
+      - name: Assert summaryReport
+        env:
+          ACTUAL: ${{ steps.action.outputs.summaryReport }}
+        run: |
+          echo "actual: $ACTUAL"
+          for needle in "My Test Summary" "| Tests | Skipped | Failures | Errors | Time |" "1.234s"; do
+            if ! printf '%s' "$ACTUAL" | grep -qF "$needle"; then
+              echo "FAIL: summaryReport missing '$needle'"
+              exit 1
+            fi
+          done
+          echo "PASS"

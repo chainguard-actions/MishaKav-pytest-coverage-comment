@@ -1,0 +1,35 @@
+name: Test missing coverage file
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          pytest-coverage-path: tests/fixtures/does-not-exist.txt
+          hide-comment: 'true'
+      - name: Assert graceful handling
+        env:
+          COVERAGE: ${{ steps.action.outputs.coverage }}
+          COLOR: ${{ steps.action.outputs.color }}
+          HTML: ${{ steps.action.outputs.coverageHtml }}
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome=$OUTCOME coverage=$COVERAGE color=$COLOR html=$HTML"
+          [ "$OUTCOME" = "success" ] || { echo "FAIL: outcome"; exit 1; }
+          if [ -n "$COVERAGE" ] && [ "$COVERAGE" != "0" ]; then
+            echo "FAIL: expected empty or '0' coverage"
+            exit 1
+          fi
+          if [ -n "$COLOR" ] && [ "$COLOR" != "red" ]; then
+            echo "FAIL: expected empty or 'red' color"
+            exit 1
+          fi
+          if [ -n "$HTML" ]; then
+            echo "FAIL: expected empty coverageHtml"
+            exit 1
+          fi
+          echo "PASS"

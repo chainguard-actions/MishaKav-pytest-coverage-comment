@@ -1,0 +1,55 @@
+name: Test basic text coverage
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          pytest-coverage-path: tests/fixtures/pytest-coverage.txt
+          hide-comment: 'true'
+      - name: Assert coverage output
+        env:
+          ACTUAL: ${{ steps.action.outputs.coverage }}
+        run: |
+          echo "actual: $ACTUAL"
+          if [ "$ACTUAL" != "87%" ]; then
+            echo "FAIL: expected '87%'"
+            exit 1
+          fi
+          echo "PASS"
+      - name: Assert color output
+        env:
+          ACTUAL: ${{ steps.action.outputs.color }}
+        run: |
+          echo "actual: $ACTUAL"
+          if [ "$ACTUAL" != "green" ]; then
+            echo "FAIL: expected 'green'"
+            exit 1
+          fi
+          echo "PASS"
+      - name: Assert warnings output
+        env:
+          ACTUAL: ${{ steps.action.outputs.warnings }}
+        run: |
+          echo "actual: $ACTUAL"
+          if [ "$ACTUAL" != "2" ]; then
+            echo "FAIL: expected '2'"
+            exit 1
+          fi
+          echo "PASS"
+      - name: Assert coverageHtml output
+        env:
+          ACTUAL: ${{ steps.action.outputs.coverageHtml }}
+        run: |
+          echo "actual: $ACTUAL"
+          for needle in "Coverage Report" "img.shields.io/badge/Coverage-87%25-green" "app.py" "/blob/main/src/app.py"; do
+            if ! printf '%s' "$ACTUAL" | grep -qF "$needle"; then
+              echo "FAIL: coverageHtml missing '$needle'"
+              exit 1
+            fi
+          done
+          echo "PASS"

@@ -1,0 +1,45 @@
+name: Test XML coverage
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          pytest-xml-coverage-path: tests/fixtures/coverage.xml
+          hide-comment: 'true'
+      - name: Assert coverage output
+        env:
+          ACTUAL: ${{ steps.action.outputs.coverage }}
+        run: |
+          echo "actual: $ACTUAL"
+          if [ "$ACTUAL" != "50%" ]; then
+            echo "FAIL: expected '50%'"
+            exit 1
+          fi
+          echo "PASS"
+      - name: Assert color output
+        env:
+          ACTUAL: ${{ steps.action.outputs.color }}
+        run: |
+          echo "actual: $ACTUAL"
+          if [ "$ACTUAL" != "orange" ]; then
+            echo "FAIL: expected 'orange'"
+            exit 1
+          fi
+          echo "PASS"
+      - name: Assert coverageHtml output
+        env:
+          ACTUAL: ${{ steps.action.outputs.coverageHtml }}
+        run: |
+          echo "actual: $ACTUAL"
+          for needle in "calc.py" "Coverage-50%25-orange"; do
+            if ! printf '%s' "$ACTUAL" | grep -qF "$needle"; then
+              echo "FAIL: coverageHtml missing '$needle'"
+              exit 1
+            fi
+          done
+          echo "PASS"

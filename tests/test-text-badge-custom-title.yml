@@ -1,0 +1,37 @@
+name: Test text badge with custom title and no links
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          pytest-coverage-path: tests/fixtures/pytest-coverage.txt
+          title: Backend Coverage
+          text-instead-badge: 'true'
+          remove-links-to-files: 'true'
+          remove-links-to-lines: 'true'
+          hide-comment: 'true'
+      - name: Assert summaryReport
+        env:
+          ACTUAL: ${{ steps.action.outputs.summaryReport }}
+        run: |
+          echo "actual: $ACTUAL"
+          for needle in "87% (26/30)" "Backend Coverage"; do
+            if ! printf '%s' "$ACTUAL" | grep -qF "$needle"; then
+              echo "FAIL: summaryReport missing '$needle'"
+              exit 1
+            fi
+          done
+          if printf '%s' "$ACTUAL" | grep -qF "img.shields.io"; then
+            echo "FAIL: badge image should be replaced by text"
+            exit 1
+          fi
+          if printf '%s' "$ACTUAL" | grep -qF "/blob/"; then
+            echo "FAIL: links should be removed"
+            exit 1
+          fi
+          echo "PASS"

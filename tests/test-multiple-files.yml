@@ -1,0 +1,43 @@
+name: Test multiple files
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          pytest-coverage-path: ''
+          hide-comment: 'true'
+          multiple-files: |
+            Backend API, tests/fixtures/pytest-coverage.txt, tests/fixtures/junit.xml
+            Frontend Lib, tests/fixtures/coverage.xml
+      - name: Assert first report outputs
+        env:
+          TESTS: ${{ steps.action.outputs.tests }}
+          FAILURES: ${{ steps.action.outputs.failures }}
+          HTML: ${{ steps.action.outputs.coverageHtml }}
+        run: |
+          echo "tests=$TESTS failures=$FAILURES"
+          echo "html: $HTML"
+          [ "$TESTS" = "4" ] || { echo "FAIL: tests"; exit 1; }
+          [ "$FAILURES" = "1" ] || { echo "FAIL: failures"; exit 1; }
+          if ! printf '%s' "$HTML" | grep -qF "Coverage-87%25-green"; then
+            echo "FAIL: coverageHtml should contain first report badge"
+            exit 1
+          fi
+          echo "PASS"
+      - name: Assert summaryReport contains both titles
+        env:
+          ACTUAL: ${{ steps.action.outputs.summaryReport }}
+        run: |
+          echo "actual: $ACTUAL"
+          for needle in "| Title | Coverage | Tests |" "Backend API" "Frontend Lib" "Coverage-50%25-orange"; do
+            if ! printf '%s' "$ACTUAL" | grep -qF "$needle"; then
+              echo "FAIL: summaryReport missing '$needle'"
+              exit 1
+            fi
+          done
+          echo "PASS"

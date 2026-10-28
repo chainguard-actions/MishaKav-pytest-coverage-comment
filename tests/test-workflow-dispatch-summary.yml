@@ -1,0 +1,33 @@
+name: Test workflow_dispatch step summary without issue number
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          pytest-coverage-path: tests/fixtures/pytest-coverage.txt
+          junitxml-path: tests/fixtures/junit.xml
+          hide-emoji: 'true'
+      - name: Assert action succeeded with outputs
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          COVERAGE: ${{ steps.action.outputs.coverage }}
+          SUMMARY: ${{ steps.action.outputs.summaryReport }}
+        run: |
+          echo "outcome=$OUTCOME coverage=$COVERAGE"
+          echo "summary: $SUMMARY"
+          [ "$OUTCOME" = "success" ] || { echo "FAIL: outcome"; exit 1; }
+          [ "$COVERAGE" = "87%" ] || { echo "FAIL: coverage"; exit 1; }
+          if printf '%s' "$SUMMARY" | grep -qF ":zzz:"; then
+            echo "FAIL: emojis should be hidden"
+            exit 1
+          fi
+          if ! printf '%s' "$SUMMARY" | grep -qF "| 4 | 1 | 1 | 0 | 1.234s |"; then
+            echo "FAIL: expected emoji-free test summary row"
+            exit 1
+          fi
+          echo "PASS"

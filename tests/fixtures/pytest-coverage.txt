@@ -1,0 +1,18 @@
+============================= test session starts ==============================
+platform linux -- Python 3.10.0, pytest-7.4.0, pluggy-1.2.0
+rootdir: /home/runner/work/project/project
+plugins: cov-4.1.0
+collected 3 items
+
+tests/test_app.py ...                                                    [100%]
+
+---------- coverage: platform linux, python 3.10.0-final-0 -----------
+Name                 Stmts   Miss  Cover   Missing
+--------------------------------------------------
+src/__init__.py          0      0   100%
+src/app.py              20      4    80%   10-12, 15
+src/utils.py            10      0   100%
+--------------------------------------------------
+TOTAL                   30      4    87%
+
+======================== 3 passed, 2 warnings in 0.12s =========================
