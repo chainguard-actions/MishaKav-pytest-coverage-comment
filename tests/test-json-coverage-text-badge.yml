@@ -1,0 +1,30 @@
+name: Test JSON coverage report with text badge
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          pytest-json-coverage-path: tests/fixtures/coverage.json
+          text-instead-badge: 'true'
+          hide-comment: 'true'
+      - name: Assert outputs
+        env:
+          COVERAGE: ${{ steps.action.outputs.coverage }}
+          COLOR: ${{ steps.action.outputs.color }}
+          HTML: ${{ steps.action.outputs.coverageHtml }}
+        run: |
+          echo "coverage: $COVERAGE color: $COLOR"
+          echo "html: $HTML"
+          [ "$COVERAGE" = "95%" ] || { echo "FAIL: expected coverage 95%"; exit 1; }
+          [ "$COLOR" = "brightgreen" ] || { echo "FAIL: expected color brightgreen"; exit 1; }
+          echo "$HTML" | grep -qF "95% (19/20)" || { echo "FAIL: text badge missing"; exit 1; }
+          if echo "$HTML" | grep -q "img.shields.io"; then
+            echo "FAIL: badge image should be replaced by text"
+            exit 1
+          fi
+          echo "PASS"

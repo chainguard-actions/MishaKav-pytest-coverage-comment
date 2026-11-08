@@ -1,0 +1,27 @@
+name: Test hide-report with badge without link
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          pytest-coverage-path: tests/fixtures/pytest-coverage.txt
+          hide-report: 'true'
+          remove-link-from-badge: 'true'
+          hide-comment: 'true'
+      - name: Assert only badge is rendered
+        env:
+          HTML: ${{ steps.action.outputs.coverageHtml }}
+          COVERAGE: ${{ steps.action.outputs.coverage }}
+        run: |
+          echo "html: $HTML"
+          [ "$COVERAGE" = "80%" ] || { echo "FAIL: coverage"; exit 1; }
+          echo "$HTML" | grep -q "img.shields.io/badge/Coverage-80%25-green.svg" || { echo "FAIL: badge missing"; exit 1; }
+          if echo "$HTML" | grep -q "<table>"; then echo "FAIL: table should be hidden"; exit 1; fi
+          if echo "$HTML" | grep -q "<details>"; then echo "FAIL: details should be hidden"; exit 1; fi
+          if echo "$HTML" | grep -q "<a href"; then echo "FAIL: badge link should be removed"; exit 1; fi
+          echo "PASS"

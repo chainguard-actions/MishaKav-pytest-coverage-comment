@@ -1,0 +1,36 @@
+name: Test text coverage report
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          pytest-coverage-path: tests/fixtures/pytest-coverage.txt
+      - name: Assert coverage and color
+        env:
+          COVERAGE: ${{ steps.action.outputs.coverage }}
+          COLOR: ${{ steps.action.outputs.color }}
+          WARNINGS: ${{ steps.action.outputs.warnings }}
+        run: |
+          echo "coverage: $COVERAGE color: $COLOR warnings: $WARNINGS"
+          [ "$COVERAGE" = "80%" ] || { echo "FAIL: expected coverage 80%"; exit 1; }
+          [ "$COLOR" = "green" ] || { echo "FAIL: expected color green"; exit 1; }
+          [ "$WARNINGS" = "0" ] || { echo "FAIL: expected warnings 0"; exit 1; }
+          echo "PASS"
+      - name: Assert HTML outputs
+        env:
+          HTML: ${{ steps.action.outputs.coverageHtml }}
+          SUMMARY: ${{ steps.action.outputs.summaryReport }}
+        run: |
+          echo "coverageHtml: $HTML"
+          echo "summaryReport: $SUMMARY"
+          echo "$HTML" | grep -q "Coverage Report" || { echo "FAIL: title missing"; exit 1; }
+          echo "$HTML" | grep -q "img.shields.io/badge/Coverage-80%25-green.svg" || { echo "FAIL: badge missing"; exit 1; }
+          echo "$HTML" | grep -q "foo.py" || { echo "FAIL: file row missing"; exit 1; }
+          echo "$HTML" | grep -q "/blob/main/" || { echo "FAIL: expected links to default branch main"; exit 1; }
+          echo "$SUMMARY" | grep -q "Coverage Report" || { echo "FAIL: summaryReport missing title"; exit 1; }
+          echo "PASS"

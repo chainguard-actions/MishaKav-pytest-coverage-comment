@@ -1,0 +1,29 @@
+name: Test XML coverage report
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          pytest-xml-coverage-path: tests/fixtures/coverage.xml
+          title: XML Report
+          badge-title: XmlCov
+          hide-comment: 'true'
+      - name: Assert outputs
+        env:
+          COVERAGE: ${{ steps.action.outputs.coverage }}
+          COLOR: ${{ steps.action.outputs.color }}
+          HTML: ${{ steps.action.outputs.coverageHtml }}
+        run: |
+          echo "coverage: $COVERAGE color: $COLOR"
+          echo "html: $HTML"
+          [ "$COVERAGE" = "50%" ] || { echo "FAIL: expected coverage 50%"; exit 1; }
+          [ "$COLOR" = "orange" ] || { echo "FAIL: expected color orange"; exit 1; }
+          echo "$HTML" | grep -q "XML Report" || { echo "FAIL: custom title missing"; exit 1; }
+          echo "$HTML" | grep -q "badge/XmlCov-50%25-orange.svg" || { echo "FAIL: custom badge missing"; exit 1; }
+          echo "$HTML" | grep -q "foo.py" || { echo "FAIL: file row missing"; exit 1; }
+          echo "PASS"

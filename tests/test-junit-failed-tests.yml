@@ -1,0 +1,48 @@
+name: Test JUnit summary with failed tests
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          pytest-coverage-path: tests/fixtures/pytest-coverage.txt
+          junitxml-path: tests/fixtures/junit.xml
+          junitxml-title: My Tests
+          show-failed-tests: 'true'
+      - name: Assert junit counts
+        env:
+          TESTS: ${{ steps.action.outputs.tests }}
+          SKIPPED: ${{ steps.action.outputs.skipped }}
+          FAILURES: ${{ steps.action.outputs.failures }}
+          ERRORS: ${{ steps.action.outputs.errors }}
+          TIME: ${{ steps.action.outputs.time }}
+        run: |
+          echo "tests=$TESTS skipped=$SKIPPED failures=$FAILURES errors=$ERRORS time=$TIME"
+          [ "$TESTS" = "4" ] || { echo "FAIL: tests"; exit 1; }
+          [ "$SKIPPED" = "1" ] || { echo "FAIL: skipped"; exit 1; }
+          [ "$FAILURES" = "1" ] || { echo "FAIL: failures"; exit 1; }
+          [ "$ERRORS" = "0" ] || { echo "FAIL: errors"; exit 1; }
+          [ "$TIME" = "1.5" ] || { echo "FAIL: time"; exit 1; }
+          echo "PASS"
+      - name: Assert notSuccessTestInfo and failedTestsHtml
+        env:
+          INFO: ${{ steps.action.outputs.notSuccessTestInfo }}
+          FAILED_HTML: ${{ steps.action.outputs.failedTestsHtml }}
+          SUMMARY: ${{ steps.action.outputs.summaryReport }}
+          COVERAGE: ${{ steps.action.outputs.coverage }}
+        run: |
+          echo "info: $INFO"
+          echo "failedTestsHtml: $FAILED_HTML"
+          echo "summary: $SUMMARY"
+          COUNT=$(echo "$INFO" | jq -r '.count')
+          [ "$COUNT" = "2" ] || { echo "FAIL: expected count 2, got $COUNT"; exit 1; }
+          [ "$(echo "$INFO" | jq -r '.failures[0].name')" = "test_fail" ] || { echo "FAIL: failure name"; exit 1; }
+          [ "$(echo "$INFO" | jq -r '.skipped[0].name')" = "test_skip" ] || { echo "FAIL: skipped name"; exit 1; }
+          echo "$FAILED_HTML" | grep -q "test_fail" || { echo "FAIL: failedTestsHtml missing test_fail"; exit 1; }
+          echo "$SUMMARY" | grep -q "My Tests" || { echo "FAIL: junit title missing in summary"; exit 1; }
+          [ "$COVERAGE" = "80%" ] || { echo "FAIL: coverage"; exit 1; }
+          echo "PASS"
