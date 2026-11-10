@@ -4,8 +4,13 @@
   "version": "v1.13.0",
   "commit_sha": "9516bf7f32a9229cf18d5e1717ae387c7154f279",
   "url": "https://github.com/MishaKav/pytest-coverage-comment",
-  "policy_sha": "d636be7e43ef829af6e853da6b3c7566db9f72fe",
+  "policy_sha": "374911c4be584df24e6da57af2d990570ef0f859",
   "test_policy_sha": "843adf9e4b8f85d0c08b27b9d0b09dd094b54702",
   "test_agent_version": "2",
-  "harden_agent_version": "2"
+  "harden_agent_version": "2",
+  "dist_artifact": {
+    "gcs_uri": "gs://patch-actions-node-artifacts/dist-artifacts/MishaKav/pytest-coverage-comment/v1.13.0/sha256-1add592051036dc4e57edde2dae8dc09b8bca2d92ed5264d9814968dfc8c06de.tar.gz",
+    "sha256": "1add592051036dc4e57edde2dae8dc09b8bca2d92ed5264d9814968dfc8c06de",
+    "size_bytes": 363960
+  }
 }
